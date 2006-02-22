@@ -59,13 +59,11 @@ void Status::removeReplacementSt(int net, int before) {
 void Status::changeStatus(std::string info, int st) {
   tItemNets nets = this->lCtrl->getNets();
   for (tItemNets::iterator it = nets.begin(); it != nets.end(); it++) {
-    this->changeStatus(it->net, info, st);
+    if (this->isNetUseful(it->net)) this->changeStatus(it->net, info, st);
   }
 }
 
 void Status::changeStatus(int net, std::string info, int st) {
-  if (!this->isNetUseful(net)) return;
-
   if (info.length()) {
     bool dynSt = (this->stInfoVar.length() && 
       this->fCtrl->addVar(this->stInfoVar, this->getInfo(net), false));
@@ -177,7 +175,7 @@ bool Status::chgOnHidden() {
 }
 
 bool Status::isNetUseful(int net) {
-  if (this->lCtrl->getNetState(net) && this->lCtrl->isConnected(net)) {
+  if (this->lCtrl->getNetState(net)) {
     if (!this->chgOnHidden() && (ST_HIDDEN == this->getActualStatus(net))) {
       return(false);
     } else {

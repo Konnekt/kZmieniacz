@@ -31,35 +31,35 @@ using namespace kZmieniacz;
 
 namespace kZmieniacz {
   LRESULT CALLBACK tbProcNew(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
-	  switch (iMsg) {
+    switch (iMsg) {
       case WM_GETDLGCODE: {
-	      return(DLGC_DEFPUSHBUTTON | DLGC_RADIOBUTTON | DLGC_BUTTON | DLGC_WANTALLKEYS | DLGC_WANTMESSAGE);
+        return(DLGC_DEFPUSHBUTTON | DLGC_RADIOBUTTON | DLGC_BUTTON | DLGC_WANTALLKEYS | DLGC_WANTMESSAGE);
       }
 
       case WM_SIZE: {
-	      // SendMessage(pCtrl->stInfoTb, WM_SIZE, SIZE_RESTORED, || HIWORD(lParam));
-	      WORD size = (WORD)SendMessage((HWND) hWnd, (UINT) TB_GETBUTTONSIZE, 0, 0);
-	      sUIActionInfo ai;
+        // SendMessage(pCtrl->stInfoTb, WM_SIZE, SIZE_RESTORED, || HIWORD(lParam));
+        WORD size = (WORD)SendMessage((HWND) hWnd, (UINT) TB_GETBUTTONSIZE, 0, 0);
+        sUIActionInfo ai;
 
         ai.act = sUIAction(ui::tb::tb, ui::tb::width);
-	      ai.mask = UIAIM_SIZE;
+        ai.mask = UIAIM_SIZE;
 
-	      ai.w = LOWORD(lParam)- LOWORD(size);
-	      ai.h = HIWORD(lParam);
+        ai.w = LOWORD(lParam)- LOWORD(size);
+        ai.h = HIWORD(lParam);
 
-	      // ai.x = LOWORD(lParam) - LOWORD(size);
-	      // ai.y = HIWORD(lParam);
+        // ai.x = LOWORD(lParam) - LOWORD(size);
+        // ai.y = HIWORD(lParam);
 
-	      UIActionSet(ai);
+        UIActionSet(ai);
         SetWindowPos(pCtrl->stInfoTb, HWND_TOP, 0, 0, LOWORD(lParam) - LOWORD(size) + pCtrl->width, 20, 
           SWP_ASYNCWINDOWPOS | SWP_NOMOVE);
-	      break;
+        break;
       }
     }
     return(CallWindowProc(pCtrl->tbProc, hWnd, iMsg, wParam, lParam));
   }
 
-  LRESULT	CALLBACK mainProcNew(HWND hWnd, UINT	iMsg, WPARAM	wParam,	LPARAM lParam) {
+  LRESULT CALLBACK mainProcNew(HWND hWnd, UINT  iMsg, WPARAM  wParam, LPARAM lParam) {
     switch(iMsg) {
       case WM_COMMAND: {
         if ((LOWORD(wParam) == 1) && (GetFocus() == GetDlgItem(pCtrl->stInfoTb, IMIA_GGSTATUS_OFFLINE))) 
@@ -75,7 +75,7 @@ namespace kZmieniacz {
     pCtrl->mainProc = (WNDPROC) SetWindowLongPtr(handle, GWL_WNDPROC, (LONG_PTR)mainProcNew);
 
     // toolbar z przyciskami sieci
-    int netsCount = Ctrl->IMessage(IMI_GROUP_ACTIONSCOUNT, 0, 0, (int)&sUIAction(IMIG_BAR, IMIG_STATUS));
+    int n = 0, netsCount = Ctrl->IMessage(IMI_GROUP_ACTIONSCOUNT, 0, 0, (int)&sUIAction(IMIG_BAR, IMIG_STATUS));
     for (int idx = (netsCount - 1); idx > 0; idx--) {
       int acnID = Ctrl->IMessage(IMI_ACTION_GETID, 0, 0, IMIG_STATUS, idx);
       if (!acnID || !Ctrl->IMessage(IMI_ACTION_ISGROUP, 0, 0, acnID)) continue;
@@ -84,7 +84,8 @@ namespace kZmieniacz {
       if (lCtrl->isIgnored(net)) continue;
 
       // sprawdzamy czy jest separator w menu
-      int count = IMessage(IMI_GROUP_ACTIONSCOUNT, 0, 0, (int)&sUIAction(IMIG_STATUS, acnID), 0);   
+      int count = IMessage(IMI_GROUP_ACTIONSCOUNT, 0, 0, (int)&sUIAction(IMIG_STATUS, acnID), 0);
+      int id = dynAct::stInfoBtn + (n++);
       bool isSep = false;
 
       for (int i = (count - 1); i > 0; i--) {
@@ -98,18 +99,19 @@ namespace kZmieniacz {
         UIActionInsert(acnID, 0, 0, ACTT_SEP);
       }
       // dodajemy pozycjê w menu sieci
-      UIActionInsert(acnID, dynAct::stInfoBtn + lCtrl->getNetId(net), 0, ACTR_INIT, "Opis: ", ico::logoSmall); //!!!
+      UIActionInsert(acnID, id, 0, ACTR_INIT, "Opis: ", ico::stInfo);
+      pCtrl->stTbNets[id] = net;
     }
 
     // ukrywamy standardowe okienko zmiany opisu w gg
     UIActionSetStatus(IMIG_GGSTATUS, IMIA_GGSTATUS_DESC, ACTS_HIDDEN, ACTS_HIDDEN);
-    PlugStatusChange(GETINT(cfg::wnd::lastSt), GETSTRA(cfg::wnd::lastStInfo));
+    PlugStatusChange(GETINT(cfg::lastSt), GETSTRA(cfg::lastStInfo));
 
-  	sUIActionInfo ai;
+    sUIActionInfo ai;
     ai.act = sUIAction(ui::tb::tb, ui::tb::btnOk);
-	  ai.mask = UIAIM_P1;
-    ai.p1 = pCtrl->stIcon(GETINT(cfg::wnd::lastSt));
-	  UIActionSet(ai);
+    ai.mask = UIAIM_P1;
+    ai.p1 = pCtrl->stIcon(GETINT(cfg::lastSt));
+    UIActionSet(ai);
 
     return(1);
   }
@@ -128,6 +130,7 @@ namespace kZmieniacz {
 
     Ctrl->SetColumn(DTCFG, cfg::showInMainWindow, DT_CT_INT, 0, "kZmieniacz/showInMainWindow");
     Ctrl->SetColumn(DTCFG, cfg::showInCntWindow, DT_CT_INT, 1, "kZmieniacz/showInCntWindow");
+    Ctrl->SetColumn(DTCFG, cfg::thisNetStChange, DT_CT_INT, 1, "kZmieniacz/thisNetStChange");
     Ctrl->SetColumn(DTCFG, cfg::showInTrayMenu, DT_CT_INT, 1, "kZmieniacz/showInTrayMenu");
     Ctrl->SetColumn(DTCFG, cfg::stInfoInTrayMenu, DT_CT_INT, 1, "kZmieniacz/stInfoInTrayMenu");
     Ctrl->SetColumn(DTCFG, cfg::showInNetsTb, DT_CT_INT, 1, "kZmieniacz/showInNetsTb");
@@ -135,10 +138,11 @@ namespace kZmieniacz {
     Ctrl->SetColumn(DTCFG, cfg::showToolbar, DT_CT_INT, 1, "kZmieniacz/showToolbar");
     Ctrl->SetColumn(DTCFG, cfg::showToolbarOk, DT_CT_INT, 0, "kZmieniacz/showToolbarOk");
 
+    Ctrl->SetColumn(DTCFG, cfg::lastStInfo, DT_CT_STR, "", "kZmieniacz/lastStInfo");
+    Ctrl->SetColumn(DTCFG, cfg::lastSt, DT_CT_INT, ST_ONLINE, "kZmieniacz/lastSt");
+
     Ctrl->SetColumn(DTCFG, cfg::wnd::changeInfoOnEnable, DT_CT_INT, 1, "kZmieniacz/wnd/changeInfoOnEnable");
     Ctrl->SetColumn(DTCFG, cfg::wnd::changeOnEnable, DT_CT_INT, 1, "kZmieniacz/wnd/changeOnEnable");
-    Ctrl->SetColumn(DTCFG, cfg::wnd::lastStInfo, DT_CT_STR, "", "kZmieniacz/wnd/lastStInfo");
-    Ctrl->SetColumn(DTCFG, cfg::wnd::lastSt, DT_CT_INT, ST_ONLINE, "kZmieniacz/wnd/lastSt");
 
     return(1);
   }
@@ -195,6 +199,8 @@ namespace kZmieniacz {
     IconRegister(IML_ICO2, pCtrl->stIcon(ST_OFFLINE), ico.c_str());
 
     IconRegister(IML_16, ico::logoSmall, Ctrl->hDll(), IDI_LOGO);
+    IconRegister(IML_16, UIIcon(IT_LOGO, net, 0, 0), Ctrl->hDll(), IDI_LOGO);
+    IconRegister(IML_ICO, UIIcon(IT_LOGO, net, 0, 0), Ctrl->hDll(), IDI_LOGO);
 
     /* Adding configuration tabs */
     UIGroupAdd(IMIG_CFG_PLUGS, ui::cfgGroup, ACTR_SAVE, "kZmieniacz", ico::logoSmall);
@@ -226,6 +232,8 @@ namespace kZmieniacz {
       cfg::showToolbar);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "+ przycisk OK", cfg::showToolbarOk, 20);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "Zmiana statusu wszystkich sieci w oknie rozmowy", cfg::showInCntWindow);
+    UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "Zmiana statusu aktualnej sieci w oknie rozmowy", 
+      cfg::thisNetStChange);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "Zmiana statusu wszystkich sieci w menu w tray", cfg::showInTrayMenu);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "+ zmiana opisu", cfg::stInfoInTrayMenu, 20);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "Zmiana statusu wszystkich sieci na pasku sieci", cfg::showInNetsTb);
@@ -251,11 +259,11 @@ namespace kZmieniacz {
         UIActionAdd(ui::tb::btnOk, ui::tb::btnFfc, 0, "&Pogadam", pCtrl->stIcon(ST_CHAT));
         UIActionAdd(ui::tb::btnOk, ui::tb::btnAway, 0, "Z&araz wracam", pCtrl->stIcon(ST_AWAY));
         UIActionAdd(ui::tb::btnOk, ui::tb::btnNa, 0, "&Nieosi¹galny", pCtrl->stIcon(ST_NA));
-        UIActionAdd(ui::tb::btnOk, ui::tb::btnDnd, 0, "Nie przeszka&dzaæ", pCtrl->stIcon(ST_DND));		      
+        UIActionAdd(ui::tb::btnOk, ui::tb::btnDnd, 0, "Nie przeszka&dzaæ", pCtrl->stIcon(ST_DND));
         UIActionAdd(ui::tb::btnOk, ui::tb::btnInv, 0, "U&kryty", pCtrl->stIcon(ST_HIDDEN));
         UIActionAdd(ui::tb::btnOk, ui::tb::btnOff, 0, "Niedo&stêpny", pCtrl->stIcon(ST_OFFLINE));
         UIActionInsert(ui::tb::btnOk, 0, 0, ACTT_SEP);
-        UIActionInsert(ui::tb::btnOk, ui::tb::stInfo, 0, ACTR_INIT, "Opis: ", ico::logoSmall);
+        UIActionInsert(ui::tb::btnOk, ui::tb::stInfo, 0, ACTR_INIT, "Opis: ", ico::stInfo);
       }
       UIActionAdd(ui::tb::tb, ui::tb::width, ACTR_RESIZE | ACTT_HWND, "Opis Combobox");
     }
@@ -267,7 +275,7 @@ namespace kZmieniacz {
       UIActionAdd(ui::tb::stTb, ui::tb::btnFfc, 0, "&Pogadam", pCtrl->stIcon(ST_CHAT));
       UIActionAdd(ui::tb::stTb, ui::tb::btnAway, 0, "Z&araz wracam", pCtrl->stIcon(ST_AWAY));
       UIActionAdd(ui::tb::stTb, ui::tb::btnNa, 0, "&Nieosi¹galny", pCtrl->stIcon(ST_NA));
-      UIActionAdd(ui::tb::stTb, ui::tb::btnDnd, 0, "Nie przeszka&dzaæ", pCtrl->stIcon(ST_DND));		      
+      UIActionAdd(ui::tb::stTb, ui::tb::btnDnd, 0, "Nie przeszka&dzaæ", pCtrl->stIcon(ST_DND));
       UIActionAdd(ui::tb::stTb, ui::tb::btnInv, 0, "U&kryty", pCtrl->stIcon(ST_HIDDEN));
       UIActionAdd(ui::tb::stTb, ui::tb::btnOff, 0, "Niedo&stêpny", pCtrl->stIcon(ST_OFFLINE));
     }
@@ -283,8 +291,8 @@ namespace kZmieniacz {
       UIActionInsert(IMIG_TRAY, ui::tb::btnOn, 0, 0, "D&ostêpny", pCtrl->stIcon(ST_ONLINE));
 
       if (GETINT(cfg::stInfoInTrayMenu)) {
-        UIActionInsert(IMIG_TRAY, 0, 0, ACTT_SEP);	
-        UIActionInsert(IMIG_TRAY, ui::tb::stInfo, 0, ACTR_INIT, "Opis: ", ico::logoSmall);
+        UIActionInsert(IMIG_TRAY, 0, 0, ACTT_SEP);
+        UIActionInsert(IMIG_TRAY, ui::tb::stInfo, 0, ACTR_INIT, "Opis: ", ico::stInfo);
       }
     }
 
@@ -292,8 +300,17 @@ namespace kZmieniacz {
     if (GETINT(cfg::showInMainWindow)) {
       UIActionAdd(pCtrl->getPluginsGroup(), ui::tb::stInfo, 0, "Zmieñ status", ico::logoSmall);
     }
-    if (GETINT(cfg::showInCntWindow)) {
-      UIActionAdd(IMIG_MSGTB, ui::tb::stInfo, 0, "Zmieñ status", ico::logoSmall);
+
+    int allNetsStChg = GETINT(cfg::showInCntWindow);
+    int thisNetStChg = GETINT(cfg::thisNetStChange);
+
+    if (allNetsStChg && thisNetStChg) {
+      UIGroupAdd(IMIG_MSGTB, ui::msgTbGrp, 0, "Zmieñ status ...", ico::logoSmall);
+      UIActionAdd(ui::msgTbGrp, ui::tb::stInfo, ACTSC_BOLD, "... na wszystkich sieciach", ico::stInfo);
+      UIActionAdd(ui::msgTbGrp, ui::tb::stInfoThis, 0, "... na tej sieci", ico::stInfo);
+    } else {
+      if (allNetsStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfo, 0, "Zmieñ status", ico::stInfo);
+      if (thisNetStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfoThis, 0, "Zmieñ status", ico::stInfo);
     }
     return(1);
   }
@@ -307,45 +324,46 @@ namespace kZmieniacz {
     lCtrl->actionHandle(anBase->act.id, an->code);
 
     switch (anBase->act.id) {
-      case ui::tb::stInfo: {
-        if (an->code == ACTN_ACTION) {
-          wCtrl->show();
-        }
-        break;
-      }
-
       case ui::tb::width: {
-				if (anBase->code == ACTN_CREATEWINDOW) {
-					sUIActionNotify_createWindow * an = (anBase->s_size >= sizeof(sUIActionNotify_createWindow)) ? 
+        if (anBase->code == ACTN_CREATEWINDOW) {
+          sUIActionNotify_createWindow * an = (anBase->s_size >= sizeof(sUIActionNotify_createWindow)) ? 
             static_cast<sUIActionNotify_createWindow*>(anBase) : 0;
 
-					DWORD size = SendMessage((HWND) an->hwndParent, (UINT) TB_GETBUTTONSIZE, 0, 0);
-					an->hwnd = CreateWindow("combobox", "", WS_TABSTOP | WS_CHILD | WS_VISIBLE | CBS_AUTOHSCROLL | CBS_DROPDOWN | 
+          DWORD size = SendMessage((HWND) an->hwndParent, (UINT) TB_GETBUTTONSIZE, 0, 0);
+          an->hwnd = CreateWindow("combobox", "", WS_TABSTOP | WS_CHILD | WS_VISIBLE | CBS_AUTOHSCROLL | CBS_DROPDOWN | 
             WS_EX_CONTROLPARENT | WS_EX_NOPARENTNOTIFY, an->x, an->y + ((HIWORD(size) - 20) / 2), 100, 100, 
             an->hwndParent, (HMENU)anBase->act.id, Ctrl->hDll(), NULL); // + (HIWORD(size) / (2 - 10))
 
           pCtrl->width = LOWORD(size) - an->x;
-					an->w = 100;
-					an->h = 20;
-					an->y += 100;
-					an->h += 20;
+          an->w = 100;
+          an->h = 20;
+          an->y += 100;
+          an->h += 20;
 
-					pCtrl->tbProc = (WNDPROC) SetWindowLongPtr(an->hwndParent, GWL_WNDPROC, (LONG_PTR) tbProcNew);
+          pCtrl->tbProc = (WNDPROC) SetWindowLongPtr(an->hwndParent, GWL_WNDPROC, (LONG_PTR) tbProcNew);
           HWND hwnd = GetDlgItem(an->hwnd, IMIA_GGSTATUS_OFFLINE);
 
           SetProp(hwnd, "oldWndProc", (HANDLE) SetWindowLongPtr(hwnd, 
             GWLP_WNDPROC, (LONG_PTR) editFix));
-					SendMessage(an->hwnd, WM_SETFONT, (WPARAM) an->font, true);
+          SendMessage(an->hwnd, WM_SETFONT, (WPARAM) an->font, true);
 
           pCtrl->stInfoTb = an->hwnd;
-          pCtrl->refreshCombo(GETSTRA(cfg::wnd::lastStInfo));
+          pCtrl->refreshCombo(GETSTRA(cfg::lastStInfo));
         } else if (anBase->code == ACTN_DESTROYWINDOW) {
-					sUIActionNotify_destroyWindow * an = (anBase->s_size >= sizeof(sUIActionNotify_destroyWindow)) ? 
+          sUIActionNotify_destroyWindow * an = (anBase->s_size >= sizeof(sUIActionNotify_destroyWindow)) ? 
             static_cast<sUIActionNotify_destroyWindow*>(anBase) : 0;
 
-					DestroyWindow(an->hwnd);
-					pCtrl->stInfoTb = NULL;
-				}
+          DestroyWindow(an->hwnd);
+          pCtrl->stInfoTb = NULL;
+        }
+        break;
+      }
+
+      case act::clearMru: {
+        if (an->code == ACTN_ACTION) {
+          Helpers::clearMru(cfg::mruName);
+          pCtrl->refreshCombo(GETSTRA(cfg::lastStInfo));
+        }
         break;
       }
 
@@ -361,26 +379,26 @@ namespace kZmieniacz {
 
         int status = -1;
         switch (anBase->act.id){
-	        case ui::tb::btnFfc: status = ST_CHAT; break;
-	        case ui::tb::btnOn: status = ST_ONLINE; break;
-	        case ui::tb::btnAway: status = ST_AWAY; break;
-	        case ui::tb::btnNa: status = ST_NA; break;
-	        case ui::tb::btnDnd: status = ST_DND; break;
-	        case ui::tb::btnInv: status = ST_HIDDEN; break;
-	        case ui::tb::btnOff: status = ST_OFFLINE; break;
+          case ui::tb::btnFfc: status = ST_CHAT; break;
+          case ui::tb::btnOn: status = ST_ONLINE; break;
+          case ui::tb::btnAway: status = ST_AWAY; break;
+          case ui::tb::btnNa: status = ST_NA; break;
+          case ui::tb::btnDnd: status = ST_DND; break;
+          case ui::tb::btnInv: status = ST_HIDDEN; break;
+          case ui::tb::btnOff: status = ST_OFFLINE; break;
         }
 
         int len = SendMessage(pCtrl->stInfoTb, WM_GETTEXTLENGTH, 0, 0) + 1;
         char * buff = new char[len];
         GetWindowText(pCtrl->stInfoTb, buff, len);
 
-        if (anBase->act.parent != ui::tb::stTb){
-	        sMRU list; // zapisujemy do listy mru [ostatnio u¿ytych]
+        if (anBase->act.parent != ui::tb::stTb) {
+          sMRU list; // zapisujemy do listy mru [ostatnio u¿ytych]
           list.flags = MRU_GET_USETEMP | MRU_SET_LOADFIRST;
           list.name = cfg::mruName;
-	        list.current = (const char*) buff;
+          list.current = (const char*) buff;
           list.count = GETINT(cfg::mruSize);
-	        Ctrl->IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
+          Ctrl->IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
           SetWindowText(pCtrl->stInfoTb, buff);
         }
 
@@ -390,24 +408,36 @@ namespace kZmieniacz {
         break;
       }
 
-      case act::clearMru: {
+      case ui::tb::stInfoThis: {
         if (an->code == ACTN_ACTION) {
-          Helpers::clearMru(cfg::mruName);
+          wCtrl->show(GETCNTI(an->act.cnt, CNT_NET));
+        }
+        break;
+      }
+
+      case ui::tb::stInfo:
+      case ui::msgTbGrp: {
+        if (an->code == ACTN_ACTION) {
+          wCtrl->show();
+        } else if (an->code == ACTN_CREATE) {
+          std::string info = "Opis: " + sCtrl->getActualInfo(net);
+          if (info.length() > 16) {
+            info = info.substr(0, 16) + "...";
+          }
+          UIActionSetText(an->act, info.c_str());
         }
         break;
       }
     }
 
-    if ((anBase->act.id > dynAct::stInfoBtn) && (anBase->act.id < cfg::cfg)) {
-      int _net = lCtrl->getNetById(anBase->act.id - dynAct::stInfoBtn);
-      if (!_net) return(0);
+    if (!Ctrl->isRunning()) return(0);
+    if (pCtrl->stTbNets.find(anBase->act.id) != pCtrl->stTbNets.end()) {
+      int net = pCtrl->stTbNets[anBase->act.id];
 
       if (anBase->code == ACTN_ACTION) {
-        wCtrl->show(_net); // _net == net
+        wCtrl->show(net);
       } else if (an->code == ACTN_CREATE) {
-        std::string info = "Opis: ";
-        info += (char*) Ctrl->IMessage(IM_GET_STATUSINFO, _net);
-
+        std::string info = "Opis: " + sCtrl->getActualInfo(net);
         if (info.length() > 16) {
           info = info.substr(0, 16) + "...";
         }
@@ -440,8 +470,8 @@ int __stdcall IMessageProc(sIMessage_base *msgBase) {
     case IM_END:             return(IEnd());
     case IM_UIACTION:        return(actionProc((sUIActionNotify_base*)msg->p1));
 
-    case IM_GET_STATUSINFO:  return((int)GETSTRA(cfg::wnd::lastStInfo));
-    case IM_GET_STATUS:      return((int)GETSTRA(cfg::wnd::lastSt));
+    case IM_GET_STATUSINFO:  return((int)GETSTRA(cfg::lastStInfo));
+    case IM_GET_STATUS:      return((int)GETINT(cfg::lastSt));
 
     case IM_ALLPLUGINSINITIALIZED: {
       if (int oldId = Helpers::pluginExists(plugsNET::kallstatus)) {

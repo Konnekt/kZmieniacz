@@ -27,19 +27,24 @@ namespace kZmieniacz {
   }
 
   void Control::changeStatus(int status, std::string info, int net) {
-    sCtrl->changeStatus(info.c_str(), status);
+    if (net && (net != kZmieniacz::net)) {
+      sCtrl->changeStatus(net, info.c_str(), status);
+      return;
+    }
 
-	  PlugStatusChange(status, info.c_str());
+    sCtrl->changeStatus(info.c_str(), status);
+    PlugStatusChange(status, info.c_str());
+
     if (status != -1) {
       sUIActionInfo ai;
       ai.act = sUIAction(ui::tb::tb, ui::tb::btnOk);
-      ai.mask = UIAIM_P1;  		
+      ai.mask = UIAIM_P1;
       ai.p1 = this->stIcon(status);
       UIActionSet(ai);
-      SETINT(cfg::wnd::lastSt, status);
+      SETINT(cfg::lastSt, status);
     }
     if (info.length()) {
-      SETSTR(cfg::wnd::lastStInfo, info.c_str());
+      SETSTR(cfg::lastStInfo, info.c_str());
       this->refreshCombo(info);
     }
   }

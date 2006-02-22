@@ -16,7 +16,7 @@
 #pragma once
 
 namespace kZmieniacz {
-  const unsigned int net = 31; // 30
+  const unsigned int net = 30;
 
   namespace api {
     const unsigned int api = net * 1000 + IM_USER;
@@ -25,7 +25,9 @@ namespace kZmieniacz {
 
   namespace ui {
     const unsigned int ui = net * 1000;
+
     const unsigned int cfgGroup = ui + 1;
+    const unsigned int msgTbGrp = ui + 2;
 
     namespace tb {
       const unsigned int tb = ui + 10;
@@ -42,12 +44,15 @@ namespace kZmieniacz {
       const unsigned int btnOk = tb + 9;
       const unsigned int width = tb + 10;
       const unsigned int stInfo = tb + 11;
+      const unsigned int stInfoThis = tb + 12;
     }
   }
 
   namespace ico {
     const unsigned int ico = net * 1000 + 100;
+
     const unsigned int logoSmall = ico + 1;
+    const unsigned int stInfo = 503;
   }
 
   namespace act {
@@ -68,28 +73,30 @@ namespace kZmieniacz {
   namespace cfg {
     const unsigned int cfg = net * 1000 + 400;
 
+    const unsigned int showInMainWindow = cfg + 1;
+    const unsigned int showInCntWindow = cfg + 2;
+    const unsigned int thisNetStChange = cfg + 3;
+    const unsigned int showInTrayMenu = cfg + 4;
+    const unsigned int stInfoInTrayMenu = cfg + 5;
+    const unsigned int showInNetsTb = cfg + 6;
+
+    const unsigned int showToolbar = cfg + 7;
+    const unsigned int showToolbarOk = cfg + 8;
+
+    const unsigned int netChange = cfg + 9;
+    const unsigned int mruSize = cfg + 10;
+    const unsigned int dotsAppend = cfg + 11;
+
+    const unsigned int lastStInfo = cfg + 12;
+    const unsigned int lastSt = cfg + 13;
+
+    const char mruName[] = "kZStatusMsgs";
+
     namespace wnd {
       const unsigned int wnd = cfg + 20;
 
       const unsigned int changeOnEnable = wnd + 1;
       const unsigned int changeInfoOnEnable = wnd + 2;
-      const unsigned int lastStInfo = wnd + 3;
-      const unsigned int lastSt = wnd + 4;
     }
-
-    const unsigned int showInMainWindow = cfg + 1;
-    const unsigned int showInCntWindow = cfg + 2;
-    const unsigned int showInTrayMenu = cfg + 3;
-    const unsigned int stInfoInTrayMenu = cfg + 4;
-    const unsigned int showInNetsTb = cfg + 5;
-
-    const unsigned int showToolbar = cfg + 6;
-    const unsigned int showToolbarOk = cfg + 7;
-
-    const unsigned int netChange = cfg + 8;
-    const unsigned int mruSize = cfg + 9;
-    const unsigned int dotsAppend = cfg + 10;
-
-    const char mruName[] = "kZStatusMsgs";
   }
 }

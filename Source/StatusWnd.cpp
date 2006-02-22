@@ -25,14 +25,14 @@
 #define STATUS_CHANGE       0x2003
 #define STATUS_CHANGE_INFO  0x2004
 #define STATUS_EDIT_INFO    0x2005
-#define MUTE                0x2006
+#define STATUS_COUNTER      0x2006
 
 namespace kZmieniacz {
   LRESULT CALLBACK statusWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     switch(iMsg) {
       case WM_CREATE: {
-        SendMessage(hWnd, WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) ICMessage(IMI_ICONGET, 0x1f7, IML_16));
-        SendMessage(hWnd, WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) ICMessage(IMI_ICONGET, 0x1f7, IML_16));
+        SendMessage(hWnd, WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) ICMessage(IMI_ICONGET, ico::logoSmall, IML_16));
+        SendMessage(hWnd, WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) ICMessage(IMI_ICONGET, ico::logoSmall, IML_16));
 
         LPCREATESTRUCT pCreate = (LPCREATESTRUCT) lParam;
         int net = (int) pCreate->lpCreateParams;
@@ -67,10 +67,14 @@ namespace kZmieniacz {
 
         tStats stats;
         stats.push_back( sStatus( ST_ONLINE, "Dostêpny", data->hImlOnline ) );
-        stats.push_back( sStatus( ST_CHAT, "Pogadam", data->hImlChat ) );
+        if (net != plugsNET::gg) {
+          stats.push_back( sStatus( ST_CHAT, "Pogadam", data->hImlChat ) );
+        }
         stats.push_back( sStatus( ST_AWAY, "Zaraz wracam", data->hImlAway ) );
-        stats.push_back( sStatus( ST_NA, "Nieosi¹galny", data->hImlNa ) );
-        stats.push_back( sStatus( ST_DND, "Nie przeszkadzaæ", data->hImlDnd ) );
+        if (net != plugsNET::gg) {
+          stats.push_back( sStatus( ST_NA, "Nieosi¹galny", data->hImlNa ) );
+          stats.push_back( sStatus( ST_DND, "Nie przeszkadzaæ", data->hImlDnd ) );
+        }
         stats.push_back( sStatus( ST_HIDDEN, "Ukryty", data->hImlInv ) );
         stats.push_back( sStatus( ST_OFFLINE, "Niedostêpny", data->hImlOffline ) );
 
@@ -87,7 +91,7 @@ namespace kZmieniacz {
           SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM) &ti);
           wCtrl->prepareButtonImage(it->img, hWnd, net, it->id);
         }
-        CheckDlgButton(hWnd, IMessage(IM_GET_STATUS, net), BST_CHECKED);
+        CheckDlgButton(hWnd, sCtrl->getActualStatus(net), BST_CHECKED);
 
         // pole combo - wybór opisu
         HWND hWndCombo = CreateWindow("combobox", "", WS_TABSTOP | WS_CHILD | WS_VISIBLE | CBS_AUTOHSCROLL | WS_EX_CONTROLPARENT | 
@@ -105,25 +109,27 @@ namespace kZmieniacz {
           13, 8, 274, 15, hWnd, (HMENU) STATUS_WNDDESC, Ctrl->hInst(), NULL);
         SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
 
-        // checkbox - zmieñ status
-        hWndTmp = CreateWindow("button", "status", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-          13, 193, 50, 20, hWnd, (HMENU) STATUS_CHANGE, Ctrl->hInst(), NULL);      
-        SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
+        if (net == kZmieniacz::net) {
+          // checkbox - zmieñ status
+          hWndTmp = CreateWindow("button", "status", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            13, 193, 50, 20, hWnd, (HMENU) STATUS_CHANGE, Ctrl->hInst(), NULL);      
+          SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
 
-        ti.hwnd = hWndTmp;
-        ti.lpszText = "Zmieñ status";
-        SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM) &ti);
-        CheckDlgButton(hWnd, STATUS_CHANGE, GETINT(cfg::wnd::changeOnEnable) ? BST_CHECKED : 0);
+          ti.hwnd = hWndTmp;
+          ti.lpszText = "Zmieñ status";
+          SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM) &ti);
+          CheckDlgButton(hWnd, STATUS_CHANGE, GETINT(cfg::wnd::changeOnEnable) ? BST_CHECKED : 0);
 
-        // checkbox - zmieñ opis
-        hWndTmp = CreateWindow("button", "opis", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-          73, 193, 40, 20, hWnd, (HMENU) STATUS_CHANGE_INFO, Ctrl->hInst(), NULL);      
-        SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
+          // checkbox - zmieñ opis
+          hWndTmp = CreateWindow("button", "opis", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            73, 193, 40, 20, hWnd, (HMENU) STATUS_CHANGE_INFO, Ctrl->hInst(), NULL);      
+          SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
 
-        ti.hwnd = hWndTmp;
-        ti.lpszText = "Zmieñ opis";
-        SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM) &ti);
-        CheckDlgButton(hWnd, STATUS_CHANGE_INFO, GETINT(cfg::wnd::changeInfoOnEnable) ? BST_CHECKED : 0);
+          ti.hwnd = hWndTmp;
+          ti.lpszText = "Zmieñ opis";
+          SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM) &ti);
+          CheckDlgButton(hWnd, STATUS_CHANGE_INFO, GETINT(cfg::wnd::changeInfoOnEnable) ? BST_CHECKED : 0);
+        }
 
         // odczytujemy liste mru
         sMRU list;
@@ -133,17 +139,25 @@ namespace kZmieniacz {
         list.count = wCtrl->getMruSize();
         list.flags = MRU_GET_USETEMP | MRU_SET_LOADFIRST;
         sIMessage_MRU mru(IMC_MRU_GET, &list);
-        IMessage(&mru);
+        Ctrl->IMessage(&mru);
 
         // wype³niamy combobox
         for (int i = 0; i < mru.MRU->count; i++) {
           SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM) (char*) mru.MRU->values[i]);
         }
 
-        HWND edit = CreateWindowEx(WS_EX_CLIENTEDGE, "edit", mru.MRU->values[0], WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_VSCROLL | 
+        std::string info = sCtrl->getActualInfo(net).c_str();
+        HWND edit = CreateWindowEx(WS_EX_CLIENTEDGE, "edit", info.c_str(), WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_VSCROLL | 
           ES_MULTILINE | ES_WANTRETURN, 13, 88, 274, 100, hWnd, (HMENU) STATUS_EDIT_INFO, Ctrl->hInst(), NULL);
         SendMessage(edit, WM_SETFONT, (WPARAM) font, true);
         SetProp(edit, "oldWndProc", (HANDLE) SetWindowLongPtr(edit, GWLP_WNDPROC, (LONG_PTR) editFix));
+
+        std::string counter = "Znaków: " + itos(info.length());
+        hWndTmp = CreateWindow("static", counter.c_str(), WS_CHILD | WS_VISIBLE | SS_CENTER, 
+          130, 196, 62, 15, hWnd, (HMENU) STATUS_COUNTER, Ctrl->hInst(), NULL);
+        SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
+
+        // if (net == plugsNET::gg) SendMessage(hWndCombo, EM_LIMITTEXT, (WPARAM) 70, (LPARAM) 0);
 
         SetFocus(edit);
         SendMessage(hWndCombo, CB_SETCURSEL, 0, 0);
@@ -165,16 +179,8 @@ namespace kZmieniacz {
             sWndData *data = (sWndData*) GetWindowLong(hWnd, GWL_USERDATA);
             int st = 0, len = SendMessage(GetDlgItem(hWnd, STATUS_EDIT_INFO), WM_GETTEXTLENGTH, 0, 0) + 1;
             char * msg = new char[len];
-            
-            GetWindowText(GetDlgItem(hWnd, STATUS_EDIT_INFO), msg, len);
-            std::string name = wCtrl->getMruName();
 
-            sMRU list;
-            list.name = name.c_str();
-            list.flags = MRU_SET_LOADFIRST | MRU_GET_USETEMP;
-            list.current = msg;
-            list.count = wCtrl->getMruSize();
-            IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
+            GetWindowText(GetDlgItem(hWnd, STATUS_EDIT_INFO), msg, len);
 
             if (IsDlgButtonChecked(hWnd, ST_ONLINE)) st = ST_ONLINE;
             if (IsDlgButtonChecked(hWnd, ST_CHAT)) st = ST_CHAT;
@@ -184,14 +190,27 @@ namespace kZmieniacz {
             if (IsDlgButtonChecked(hWnd, ST_HIDDEN)) st = ST_HIDDEN;
             if (IsDlgButtonChecked(hWnd, ST_OFFLINE)) st = ST_OFFLINE;
 
-            if (st) {
-              SETSTR(cfg::wnd::lastStInfo, msg);
-              SETINT(cfg::wnd::lastSt, st);
-            }
-            SETINT(cfg::wnd::changeOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE) == BST_CHECKED) ? 1 : 0);
-            SETINT(cfg::wnd::changeInfoOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE_INFO) == BST_CHECKED) ? 1 : 0);
+            if (data->net == kZmieniacz::net) {
+              std::string name = wCtrl->getMruName();
 
-            // pCtrl->statusChange(msg);
+              sMRU list;
+              list.name = name.c_str();
+              list.flags = MRU_SET_LOADFIRST | MRU_GET_USETEMP;
+              list.current = msg;
+              list.count = wCtrl->getMruSize();
+              IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
+
+              SETINT(cfg::wnd::changeOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE) == BST_CHECKED) ? 1 : 0);
+              SETINT(cfg::wnd::changeInfoOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE_INFO) == BST_CHECKED) ? 1 : 0);
+
+              pCtrl->changeStatus(
+                GETINT(cfg::wnd::changeOnEnable) ? st : -1,
+                GETINT(cfg::wnd::changeInfoOnEnable) ? msg : "", 
+                data->net
+              );
+            } else {
+              pCtrl->changeStatus(st, msg, data->net);
+            }
 
             delete [] msg;
             DestroyWindow(hWnd);
@@ -211,9 +230,15 @@ namespace kZmieniacz {
 
               GetWindowText(GetDlgItem(hWnd, STATUS_EDIT), msg, len);
               SetWindowText(GetDlgItem(hWnd, STATUS_EDIT_INFO), msg);
-              delete [] msg;
 
+              std::string counter = "Znaków: " + itos(GetWindowTextLength(GetDlgItem(hWnd, STATUS_EDIT_INFO)));
+              SetWindowText(GetDlgItem((HWND)hWnd, STATUS_COUNTER), counter.c_str());
+
+              delete [] msg;
               return(1);
+            } else if (HIWORD(wParam) == EN_UPDATE) {
+              std::string counter = "Znaków: " + itos(GetWindowTextLength((HWND)lParam));
+              SetWindowText(GetDlgItem((HWND)hWnd, STATUS_COUNTER), counter.c_str());
             }
             break;
           }
@@ -259,11 +284,13 @@ namespace kZmieniacz {
   }
 
   void StatusWnd::show(int net) {
+    net = (!net) ? kZmieniacz::net : net;
+
     if (this->haveInstance(net)) {
       SetActiveWindow((HWND) this->getInstance(net));
     } else {
       std::string title = "Ustaw status - ";
-      title += (net) ? (char*) Ctrl->IMessage(IM_PLUG_NETNAME, net) : "wszystkie sieci";
+      title += (net == kZmieniacz::net) ? "wszystkie sieci" : (char*) Ctrl->IMessage(IM_PLUG_NETNAME, net);
 
       HWND hWnd = CreateWindowEx(NULL, this->className.c_str(), title.c_str(), WS_VISIBLE | WS_CAPTION | WS_SYSMENU,
         (GetSystemMetrics(SM_CXSCREEN) / 2) - ((300 - (GetSystemMetrics(SM_CXFIXEDFRAME) * 2)) / 2),

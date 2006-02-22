@@ -44,6 +44,7 @@ namespace kZmieniacz {
       HWND stInfoTb;
       WNDPROC mainProc;
       WNDPROC tbProc;
+      std::map<int, int> stTbNets;
 
     protected:
       int pluginsGroup;

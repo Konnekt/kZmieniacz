@@ -82,6 +82,5 @@ class NetList {
     tIgnoredNets ignoredNets;
     tItemNets nets;
 
-    bool configSaved;
     bool netsDrawn;
 };
