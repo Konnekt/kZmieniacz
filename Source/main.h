@@ -20,7 +20,9 @@ namespace kZmieniacz {
 
   namespace api {
     const unsigned int api = net * 1000 + IM_USER;
+
     const unsigned int showStatusWnd = api + 1;
+    const unsigned int changeStatus = api + 2;
   }
 
   namespace ui {
@@ -43,6 +45,7 @@ namespace kZmieniacz {
 
       const unsigned int btnOk = tb + 9;
       const unsigned int width = tb + 10;
+
       const unsigned int stInfo = tb + 11;
       const unsigned int stInfoThis = tb + 12;
     }
@@ -51,7 +54,7 @@ namespace kZmieniacz {
   namespace ico {
     const unsigned int ico = net * 1000 + 100;
 
-    const unsigned int logoSmall = ico + 1;
+    const unsigned int logoSmall = ico + 79;
     const unsigned int stInfo = 503;
   }
 

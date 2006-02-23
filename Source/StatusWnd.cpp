@@ -203,11 +203,10 @@ namespace kZmieniacz {
               SETINT(cfg::wnd::changeOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE) == BST_CHECKED) ? 1 : 0);
               SETINT(cfg::wnd::changeInfoOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE_INFO) == BST_CHECKED) ? 1 : 0);
 
-              pCtrl->changeStatus(
-                GETINT(cfg::wnd::changeOnEnable) ? st : -1,
-                GETINT(cfg::wnd::changeInfoOnEnable) ? msg : "", 
-                data->net
-              );
+              if (GETINT(cfg::wnd::changeInfoOnEnable))
+                pCtrl->changeStatus(GETINT(cfg::wnd::changeOnEnable) ? st : -1, msg);
+              else if (GETINT(cfg::wnd::changeOnEnable))
+                pCtrl->changeStatus(st);
             } else {
               pCtrl->changeStatus(st, msg, data->net);
             }

@@ -38,6 +38,8 @@ namespace kZmieniacz {
       }
 
       void changeStatus(int status, std::string info, int net = 0);
+      void changeStatus(int status, int net = 0);
+
       void refreshCombo(std::string info);
 
       int width;

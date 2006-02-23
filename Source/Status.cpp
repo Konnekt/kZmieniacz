@@ -56,6 +56,13 @@ void Status::removeReplacementSt(int net, int before) {
   }
 }
 
+void Status::changeStatus(int st) {
+  tItemNets nets = this->lCtrl->getNets();
+  for (tItemNets::iterator it = nets.begin(); it != nets.end(); it++) {
+    if (this->isNetUseful(it->net)) this->changeStatus(it->net, st);
+  }
+}
+
 void Status::changeStatus(std::string info, int st) {
   tItemNets nets = this->lCtrl->getNets();
   for (tItemNets::iterator it = nets.begin(); it != nets.end(); it++) {
@@ -63,7 +70,23 @@ void Status::changeStatus(std::string info, int st) {
   }
 }
 
+void Status::changeStatus(int net, int st) {
+  if (st == -1 || st == this->getActualStatus(net)) return;
+
+  st = this->applyReplacementSt(net, st);
+  if (this->isRemembered())
+    this->lastSt[net] = sItemInfo(net, st);
+
+  Ctrl->IMessage(IM_CHANGESTATUS, net, IMT_PROTOCOL, st, 0);
+
+  logDebug("[Status<%i>::changeStatus().item]: net = %i, status = %i",
+    this, net, st);
+}
+
 void Status::changeStatus(int net, std::string info, int st) {
+  if (info == this->getActualInfo(net))
+    return(this->changeStatus(net, st));
+
   if (info.length()) {
     bool dynSt = (this->stInfoVar.length() && 
       this->fCtrl->addVar(this->stInfoVar, this->getInfo(net), false));
@@ -81,7 +104,7 @@ void Status::changeStatus(int net, std::string info, int st) {
   if (this->isRemembered())
     this->lastSt[net] = sItemInfo(net, st, info);
 
-  Ctrl->IMessage(IM_CHANGESTATUS, net, IMT_PROTOCOL, st, info.length() ? (int) info.c_str() : 0);
+  Ctrl->IMessage(IM_CHANGESTATUS, net, IMT_PROTOCOL, st, (int) info.c_str());
 
   logDebug("[Status<%i>::changeStatus().item]: net = %i, status = %i, info = %s",
     this, net, st, nullChk(info));

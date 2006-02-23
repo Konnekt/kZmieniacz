@@ -27,8 +27,8 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,4,0,3
- PRODUCTVERSION 1,4,0,3
+ FILEVERSION 1,4,0,4
+ PRODUCTVERSION 1,4,0,4
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,12 +45,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "KPlugins"
             VALUE "FileDescription", "Zmiana statusu opisowego"
-            VALUE "FileVersion", "1, 4, 0, 3"
+            VALUE "FileVersion", "1, 4, 0, 4"
             VALUE "InternalName", "kZmieniacz"
             VALUE "LegalCopyright", "Copyright © 2003-2006 KPlugins Team"
             VALUE "OriginalFilename", "kZmieniacz.dll"
             VALUE "ProductName", "kZmieniacz"
-            VALUE "ProductVersion", "1, 4, 0, 3"
+            VALUE "ProductVersion", "1, 4, 0, 4"
             VALUE "URL", "http://www.kplugins.net/"
         END
     END

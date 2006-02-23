@@ -26,27 +26,40 @@ namespace kZmieniacz {
     // c u ;>
   }
 
-  void Control::changeStatus(int status, std::string info, int net) {
+  void Control::changeStatus(int status, int net) {
+    if (status == -1) return;
     if (net && (net != kZmieniacz::net)) {
-      sCtrl->changeStatus(net, info.c_str(), status);
+      sCtrl->changeStatus(net, status);
       return;
     }
 
-    sCtrl->changeStatus(info.c_str(), status);
-    PlugStatusChange(status, info.c_str());
+    sCtrl->changeStatus(status);
+    if (status != GETINT(cfg::lastSt))
+      PlugStatusChange(status, 0);
+
+    SETINT(cfg::lastSt, status);
+    Helpers::chgBtn(ui::tb::tb, ui::tb::btnOk, 0, 0, this->stIcon(status), -1);
+  }
+
+  void Control::changeStatus(int status, std::string info, int net) {
+    if (net && (net != kZmieniacz::net)) {
+      sCtrl->changeStatus(net, info, status);
+      return;
+    }
+
+    sCtrl->changeStatus(info, status);
+    int lastSt = (status != -1) ? status : GETINT(cfg::lastSt);
+
+    if (lastSt != GETINT(cfg::lastSt) || info != GETSTRA(cfg::lastStInfo))
+      PlugStatusChange(status, info.c_str());
 
     if (status != -1) {
-      sUIActionInfo ai;
-      ai.act = sUIAction(ui::tb::tb, ui::tb::btnOk);
-      ai.mask = UIAIM_P1;
-      ai.p1 = this->stIcon(status);
-      UIActionSet(ai);
       SETINT(cfg::lastSt, status);
+      Helpers::chgBtn(ui::tb::tb, ui::tb::btnOk, 0, 0, this->stIcon(status), -1);
     }
-    if (info.length()) {
-      SETSTR(cfg::lastStInfo, info.c_str());
-      this->refreshCombo(info);
-    }
+
+    SETSTR(cfg::lastStInfo, info.c_str());
+    this->refreshCombo(info);
   }
 
   void Control::refreshCombo(std::string info) {

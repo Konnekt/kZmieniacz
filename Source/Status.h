@@ -91,8 +91,10 @@ class Status {
 
     // Zmienia status, txt - opis, st - id statusu
     void changeStatus(std::string info, int st = -1);
+    void changeStatus(int st);
     // Zmienia status na wybranej sieci
     void changeStatus(int net, std::string info, int st = -1);
+    void changeStatus(int net, int st);
 
     // Zapamiêtuje aktualny opis na ka¿dej sieci
     void rememberInfo();

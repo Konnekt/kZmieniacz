@@ -105,13 +105,9 @@ namespace kZmieniacz {
 
     // ukrywamy standardowe okienko zmiany opisu w gg
     UIActionSetStatus(IMIG_GGSTATUS, IMIA_GGSTATUS_DESC, ACTS_HIDDEN, ACTS_HIDDEN);
-    PlugStatusChange(GETINT(cfg::lastSt), GETSTRA(cfg::lastStInfo));
 
-    sUIActionInfo ai;
-    ai.act = sUIAction(ui::tb::tb, ui::tb::btnOk);
-    ai.mask = UIAIM_P1;
-    ai.p1 = pCtrl->stIcon(GETINT(cfg::lastSt));
-    UIActionSet(ai);
+    PlugStatusChange(GETINT(cfg::lastSt), GETSTRA(cfg::lastStInfo));
+    Helpers::chgBtn(ui::tb::tb, ui::tb::btnOk, 0, 0, pCtrl->stIcon(GETINT(cfg::lastSt)), -1);
 
     return(1);
   }
@@ -264,6 +260,8 @@ namespace kZmieniacz {
         UIActionAdd(ui::tb::btnOk, ui::tb::btnOff, 0, "Niedo&stêpny", pCtrl->stIcon(ST_OFFLINE));
         UIActionInsert(ui::tb::btnOk, 0, 0, ACTT_SEP);
         UIActionInsert(ui::tb::btnOk, ui::tb::stInfo, 0, ACTR_INIT, "Opis: ", ico::stInfo);
+      } else {
+        UIGroupAdd(ui::tb::tb, ui::tb::btnOk, ACTS_HIDDEN, "Ustaw", pCtrl->stIcon(ST_OFFLINE));
       }
       UIActionAdd(ui::tb::tb, ui::tb::width, ACTR_RESIZE | ACTT_HWND, "Opis Combobox");
     }
@@ -289,11 +287,11 @@ namespace kZmieniacz {
       UIActionInsert(IMIG_TRAY, ui::tb::btnAway, 0, 0, "Z&araz wracam", pCtrl->stIcon(ST_AWAY));
       UIActionInsert(IMIG_TRAY, ui::tb::btnFfc, 0, 0, "&Pogadam", pCtrl->stIcon(ST_CHAT));
       UIActionInsert(IMIG_TRAY, ui::tb::btnOn, 0, 0, "D&ostêpny", pCtrl->stIcon(ST_ONLINE));
+    }
 
-      if (GETINT(cfg::stInfoInTrayMenu)) {
-        UIActionInsert(IMIG_TRAY, 0, 0, ACTT_SEP);
-        UIActionInsert(IMIG_TRAY, ui::tb::stInfo, 0, ACTR_INIT, "Opis: ", ico::stInfo);
-      }
+    if (GETINT(cfg::stInfoInTrayMenu)) {
+      UIActionInsert(IMIG_TRAY, 0, 0, ACTT_SEP);
+      UIActionInsert(IMIG_TRAY, ui::tb::stInfo, 0, ACTR_INIT, "Opis: ", ico::stInfo);
     }
 
     /* Buttons */
@@ -305,12 +303,12 @@ namespace kZmieniacz {
     int thisNetStChg = GETINT(cfg::thisNetStChange);
 
     if (allNetsStChg && thisNetStChg) {
-      UIGroupAdd(IMIG_MSGTB, ui::msgTbGrp, 0, "Zmieñ status ...", ico::logoSmall);
-      UIActionAdd(ui::msgTbGrp, ui::tb::stInfo, ACTSC_BOLD, "... na wszystkich sieciach", ico::stInfo);
-      UIActionAdd(ui::msgTbGrp, ui::tb::stInfoThis, 0, "... na tej sieci", ico::stInfo);
+      UIGroupAdd(IMIG_MSGTB, ui::msgTbGrp, ACTR_INIT, "Zmieñ status ...", ico::logoSmall);
+      UIActionAdd(ui::msgTbGrp, ui::tb::stInfo, ACTSC_BOLD, "na wszystkich sieciach", ico::stInfo);
+      UIActionAdd(ui::msgTbGrp, ui::tb::stInfoThis, 0, "na tej sieci", ico::stInfo);
     } else {
       if (allNetsStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfo, 0, "Zmieñ status", ico::stInfo);
-      if (thisNetStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfoThis, 0, "Zmieñ status", ico::stInfo);
+      if (thisNetStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfoThis, ACTR_INIT, "Zmieñ status", ico::stInfo);
     }
     return(1);
   }
@@ -343,8 +341,7 @@ namespace kZmieniacz {
           pCtrl->tbProc = (WNDPROC) SetWindowLongPtr(an->hwndParent, GWL_WNDPROC, (LONG_PTR) tbProcNew);
           HWND hwnd = GetDlgItem(an->hwnd, IMIA_GGSTATUS_OFFLINE);
 
-          SetProp(hwnd, "oldWndProc", (HANDLE) SetWindowLongPtr(hwnd, 
-            GWLP_WNDPROC, (LONG_PTR) editFix));
+          SetProp(hwnd, "oldWndProc", (HANDLE) SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) editFix));
           SendMessage(an->hwnd, WM_SETFONT, (WPARAM) an->font, true);
 
           pCtrl->stInfoTb = an->hwnd;
@@ -392,7 +389,7 @@ namespace kZmieniacz {
         char * buff = new char[len];
         GetWindowText(pCtrl->stInfoTb, buff, len);
 
-        if (anBase->act.parent != ui::tb::stTb) {
+        if (an->act.id == ui::tb::btnOk) {
           sMRU list; // zapisujemy do listy mru [ostatnio u¿ytych]
           list.flags = MRU_GET_USETEMP | MRU_SET_LOADFIRST;
           list.name = cfg::mruName;
@@ -400,23 +397,39 @@ namespace kZmieniacz {
           list.count = GETINT(cfg::mruSize);
           Ctrl->IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
           SetWindowText(pCtrl->stInfoTb, buff);
-        }
 
-        pCtrl->changeStatus(status, ((anBase->act.parent != ui::tb::stTb) ? buff : ""));
+          pCtrl->changeStatus(-1, buff);
+        } else {
+          pCtrl->changeStatus(status);
+        }
 
         delete [] buff;
         break;
       }
 
       case ui::tb::stInfoThis: {
-        if (an->code == ACTN_ACTION) {
+        bool isHandled = !lCtrl->isIgnored(GETCNTI(an->act.cnt, CNT_NET));
+
+        if (an->code == ACTN_ACTION && isHandled) {
           wCtrl->show(GETCNTI(an->act.cnt, CNT_NET));
+        } else if (an->code == ACTN_CREATE) {
+          Helpers::chgBtn(IMIG_MSGTB, ui::tb::stInfoThis, AC_CURRENT, 0, 0, 
+            (isHandled) ? 0 : ACTS_HIDDEN);
         }
         break;
       }
 
-      case ui::tb::stInfo:
       case ui::msgTbGrp: {
+        if (an->code == ACTN_ACTION) {
+          wCtrl->show();
+        } else if (an->code == ACTN_CREATEGROUP) {
+          Helpers::chgBtn(ui::msgTbGrp, ui::tb::stInfoThis, AC_CURRENT, 0, 0, 
+            !lCtrl->isIgnored(GETCNTI(an->act.cnt, CNT_NET)) ? 0 : ACTS_DISABLED);
+        }
+        break;
+      }
+
+      case ui::tb::stInfo: {
         if (an->code == ACTN_ACTION) {
           wCtrl->show();
         } else if (an->code == ACTN_CREATE) {
@@ -473,6 +486,36 @@ int __stdcall IMessageProc(sIMessage_base *msgBase) {
     case IM_GET_STATUSINFO:  return((int)GETSTRA(cfg::lastStInfo));
     case IM_GET_STATUS:      return((int)GETINT(cfg::lastSt));
 
+    case IM_PLUG_UPDATE: {
+      /*
+      if (!msg->p1 || msg->p1 > VERSION_TO_NUM(1,5,0,3)) break;
+      // odczytujemy liste mru
+      sMRU oldList;
+
+      oldList.name = "dlg_gg_status_desc";
+      oldList.buffSize = 1024;
+      oldList.count = 1000;
+      oldList.flags = MRU_GET_USETEMP | MRU_SET_LOADFIRST;
+
+      sIMessage_MRU mru(IMC_MRU_GET, &oldList);
+      Ctrl->IMessage(&mru);
+
+      // wype³niamy combobox
+      for (int i = 0; i < mru.MRU->count; i++) {
+        sMRU list;
+        list.name = cfg::mruName;
+        list.flags = MRU_SET_LOADFIRST | MRU_GET_USETEMP;
+        list.current = mru.MRU->values[i];
+        list.count = GETINT(cfg::mruSize);
+        Ctrl->IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
+      }
+
+      logDebug("[kZmieniacz::IMessageProc(IM_PLUG_UPDATE)]: zaimportowano %i statusów",
+        mru.MRU->count);
+      */
+      break;
+    }
+
     case IM_ALLPLUGINSINITIALIZED: {
       if (int oldId = Helpers::pluginExists(plugsNET::kallstatus)) {
         Ctrl->IMessage(&sIMessage_plugOut(oldId, "kZmieniacz z powodzeniem "
@@ -490,6 +533,13 @@ int __stdcall IMessageProc(sIMessage_base *msgBase) {
       logDebug("Remote API Call [showAwayWnd]: from = %s, net = %i",
         Helpers::getPlugName(msg->sender), msg->p1);
       wCtrl->show(msg->p1);
+      break;
+    }
+
+    case api::changeStatus: {
+      logDebug("Remote API Call [changeStatus]: from = %s, status = %i, info = %s",
+        Helpers::getPlugName(msg->sender), msg->p1, nullChk((const char*)msg->p2));
+      // pCtrl->changeStatus(msg->p1, (char*)msg->p2, net);
       break;
     }
 
