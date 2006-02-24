@@ -132,18 +132,12 @@ namespace kZmieniacz {
         }
 
         // odczytujemy liste mru
-        sMRU list;
         std::string name = wCtrl->getMruName();
-
-        list.name = name.c_str();
-        list.count = wCtrl->getMruSize();
-        list.flags = MRU_GET_USETEMP | MRU_SET_LOADFIRST;
-        sIMessage_MRU mru(IMC_MRU_GET, &list);
-        Ctrl->IMessage(&mru);
+        tMRUlist list = Helpers::getMRUlist(name.c_str(), wCtrl->getMruSize());
 
         // wype³niamy combobox
-        for (int i = 0; i < mru.MRU->count; i++) {
-          SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM) (char*) mru.MRU->values[i]);
+        for (tMRUlist::iterator it = list.begin(); it != list.end(); it++) {
+          SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM) (*it).c_str());
         }
 
         std::string info = sCtrl->getActualInfo(net).c_str();
@@ -192,13 +186,7 @@ namespace kZmieniacz {
 
             if (data->net == kZmieniacz::net) {
               std::string name = wCtrl->getMruName();
-
-              sMRU list;
-              list.name = name.c_str();
-              list.flags = MRU_SET_LOADFIRST | MRU_GET_USETEMP;
-              list.current = msg;
-              list.count = wCtrl->getMruSize();
-              IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
+              Helpers::setMRUlist(name.c_str(), msg, wCtrl->getMruSize());
 
               SETINT(cfg::wnd::changeOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE) == BST_CHECKED) ? 1 : 0);
               SETINT(cfg::wnd::changeInfoOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE_INFO) == BST_CHECKED) ? 1 : 0);

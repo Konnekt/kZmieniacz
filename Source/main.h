@@ -22,7 +22,8 @@ namespace kZmieniacz {
     const unsigned int api = net * 1000 + IM_USER;
 
     const unsigned int showStatusWnd = api + 1;
-    const unsigned int changeStatus = api + 2;
+    const unsigned int changeSt = api + 2;
+    const unsigned int changeStInfo = api + 3;
   }
 
   namespace ui {

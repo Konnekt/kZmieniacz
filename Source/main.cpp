@@ -308,7 +308,7 @@ namespace kZmieniacz {
       UIActionAdd(ui::msgTbGrp, ui::tb::stInfoThis, 0, "na tej sieci", ico::stInfo);
     } else {
       if (allNetsStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfo, 0, "Zmieñ status", ico::stInfo);
-      if (thisNetStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfoThis, ACTR_INIT, "Zmieñ status", ico::stInfo);
+      if (thisNetStChg) UIActionAdd(IMIG_MSGTB, ui::tb::stInfoThis, ACTR_SHOW, "Zmieñ status", ico::stInfo);
     }
     return(1);
   }
@@ -390,12 +390,7 @@ namespace kZmieniacz {
         GetWindowText(pCtrl->stInfoTb, buff, len);
 
         if (an->act.id == ui::tb::btnOk) {
-          sMRU list; // zapisujemy do listy mru [ostatnio u¿ytych]
-          list.flags = MRU_GET_USETEMP | MRU_SET_LOADFIRST;
-          list.name = cfg::mruName;
-          list.current = (const char*) buff;
-          list.count = GETINT(cfg::mruSize);
-          Ctrl->IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
+          Helpers::setMRUlist(cfg::mruName, buff, GETINT(cfg::mruSize));
           SetWindowText(pCtrl->stInfoTb, buff);
 
           pCtrl->changeStatus(-1, buff);
@@ -410,9 +405,9 @@ namespace kZmieniacz {
       case ui::tb::stInfoThis: {
         bool isHandled = !lCtrl->isIgnored(GETCNTI(an->act.cnt, CNT_NET));
 
-        if (an->code == ACTN_ACTION && isHandled) {
-          wCtrl->show(GETCNTI(an->act.cnt, CNT_NET));
-        } else if (an->code == ACTN_CREATE) {
+        if (an->code == ACTN_ACTION) {
+          wCtrl->show(isHandled ? GETCNTI(an->act.cnt, CNT_NET) : 0);
+        } else if (an->code == ACTN_SHOW) {
           Helpers::chgBtn(IMIG_MSGTB, ui::tb::stInfoThis, AC_CURRENT, 0, 0, 
             (isHandled) ? 0 : ACTS_HIDDEN);
         }
@@ -487,32 +482,16 @@ int __stdcall IMessageProc(sIMessage_base *msgBase) {
     case IM_GET_STATUS:      return((int)GETINT(cfg::lastSt));
 
     case IM_PLUG_UPDATE: {
-      /*
-      if (!msg->p1 || msg->p1 > VERSION_TO_NUM(1,5,0,3)) break;
+      if (!msg->p1 || msg->p1 > VERSION_TO_NUM(1,4,0,3)) break;
+
       // odczytujemy liste mru
-      sMRU oldList;
+      tMRUlist list = Helpers::getMRUlist("dlg_gg_status_desc", 1000);
 
-      oldList.name = "dlg_gg_status_desc";
-      oldList.buffSize = 1024;
-      oldList.count = 1000;
-      oldList.flags = MRU_GET_USETEMP | MRU_SET_LOADFIRST;
+      // przepisujemy opisy do nowej listy MRU
+      Helpers::setMRUlist(cfg::mruName, list, GETINT(cfg::mruSize));
 
-      sIMessage_MRU mru(IMC_MRU_GET, &oldList);
-      Ctrl->IMessage(&mru);
-
-      // wype³niamy combobox
-      for (int i = 0; i < mru.MRU->count; i++) {
-        sMRU list;
-        list.name = cfg::mruName;
-        list.flags = MRU_SET_LOADFIRST | MRU_GET_USETEMP;
-        list.current = mru.MRU->values[i];
-        list.count = GETINT(cfg::mruSize);
-        Ctrl->IMessage(&sIMessage_MRU(IMC_MRU_SET, &list));
-      }
-
-      logDebug("[kZmieniacz::IMessageProc(IM_PLUG_UPDATE)]: zaimportowano %i statusów",
-        mru.MRU->count);
-      */
+      logDebug("[kZmieniacz::IMessageProc(IM_PLUG_UPDATE)]: zaimportowano %i opisów",
+        list.size());
       break;
     }
 
@@ -536,10 +515,17 @@ int __stdcall IMessageProc(sIMessage_base *msgBase) {
       break;
     }
 
-    case api::changeStatus: {
-      logDebug("Remote API Call [changeStatus]: from = %s, status = %i, info = %s",
-        Helpers::getPlugName(msg->sender), msg->p1, nullChk((const char*)msg->p2));
-      // pCtrl->changeStatus(msg->p1, (char*)msg->p2, net);
+    case api::changeSt: {
+      logDebug("Remote API Call [changeSt]: from = %s, status = %i",
+        Helpers::getPlugName(msg->sender), msg->p1);
+      pCtrl->changeStatus(msg->p1);
+      break;
+    }
+
+    case api::changeStInfo: {
+      logDebug("Remote API Call [changeStInfo]: from = %s, status = %i, info = %s",
+        Helpers::getPlugName(msg->sender), msg->p1, nullChk((char*)msg->p2));
+      pCtrl->changeStatus(msg->p1, (char*)msg->p2);
       break;
     }
 

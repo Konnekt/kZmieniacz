@@ -16,6 +16,8 @@
 #pragma once
 #include "stdafx.h"
 
+typedef std::deque<std::string> tMRUlist;
+
 /*
  *  Integer -> String conversion
  */
@@ -66,6 +68,10 @@ namespace Helpers {
   void showKNotify(char * text, int ico);
   int findParentAction(int group, int id);
   int subclassAction(int group, int id, int mask = UIAIM_ALL);
+
+  tMRUlist getMRUlist(const char * name, int count = 100, const char * buff = 0, int buffSize = 0);
+  void setMRUlist(const char * name, std::string current, int count = 100);
+  void setMRUlist(const char * name, tMRUlist list, int count = 100);
   void clearMru(const char * name);
 
   void addItemToHistory(cMessage* msg, int cnt, const char * dir, std::string name, int session = 0);
