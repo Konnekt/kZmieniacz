@@ -18,6 +18,7 @@
 #include "main.h"
 
 #include "Helpers.h"
+#include "MRU.h"
 #include "NetList.h"
 #include "Status.h"
 #include "StatusWnd.h"
@@ -113,8 +114,8 @@ namespace kZmieniacz {
   }
 
   int IEnd() {
-    delete pCtrl, sCtrl, wCtrl, lCtrl;
-    pCtrl, sCtrl, wCtrl, lCtrl = NULL;
+    delete pCtrl, sCtrl, wCtrl, lCtrl, MRUlist;
+    pCtrl, sCtrl, wCtrl, lCtrl, MRUlist = NULL;
 
     return(1);
   }
@@ -144,8 +145,10 @@ namespace kZmieniacz {
   }
 
   int IPrepare() {
+    MRUlist = new MRU(cfg::mruName, cfg::mruSize, true);
+
     pCtrl = new Control();
-    wCtrl = new StatusWnd("kZStatusWnd", cfg::mruName, cfg::mruSize);
+    wCtrl = new StatusWnd("kZStatusWnd");
 
     lCtrl = new NetList(cfg::netChange, ui::cfgGroup, dynAct::dynAct, 
       act::cfgGroupCheckCreate, act::cfgGroupCheckDestroy);
@@ -358,7 +361,7 @@ namespace kZmieniacz {
 
       case act::clearMru: {
         if (an->code == ACTN_ACTION) {
-          Helpers::clearMru(cfg::mruName);
+          MRUlist->clear();
           pCtrl->refreshCombo(GETSTRA(cfg::lastStInfo));
         }
         break;
@@ -375,7 +378,7 @@ namespace kZmieniacz {
         if (an->code != ACTN_ACTION) break;
 
         int status = -1;
-        switch (anBase->act.id){
+        switch (anBase->act.id) {
           case ui::tb::btnFfc: status = ST_CHAT; break;
           case ui::tb::btnOn: status = ST_ONLINE; break;
           case ui::tb::btnAway: status = ST_AWAY; break;
@@ -390,9 +393,7 @@ namespace kZmieniacz {
         GetWindowText(pCtrl->stInfoTb, buff, len);
 
         if (an->act.id == ui::tb::btnOk) {
-          Helpers::setMRUlist(cfg::mruName, buff, GETINT(cfg::mruSize));
-          SetWindowText(pCtrl->stInfoTb, buff);
-
+          MRUlist->append(buff);
           pCtrl->changeStatus(-1, buff);
         } else {
           pCtrl->changeStatus(status);
@@ -485,10 +486,10 @@ int __stdcall IMessageProc(sIMessage_base *msgBase) {
       if (!msg->p1 || msg->p1 > VERSION_TO_NUM(1,4,0,3)) break;
 
       // odczytujemy liste mru
-      tMRUlist list = Helpers::getMRUlist("dlg_gg_status_desc", 1000);
+      tMRUlist list = MRU::get("dlg_gg_status_desc", 1000, false);
 
       // przepisujemy opisy do nowej listy MRU
-      Helpers::setMRUlist(cfg::mruName, list, GETINT(cfg::mruSize));
+      MRUlist->set(list);
 
       logDebug("[kZmieniacz::IMessageProc(IM_PLUG_UPDATE)]: zaimportowano %i opisów",
         list.size());

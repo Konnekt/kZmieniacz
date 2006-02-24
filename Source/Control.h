@@ -19,6 +19,7 @@
 #include "main.h"
 
 #include "Helpers.h"
+#include "MRU.h"
 #include "NetList.h"
 #include "Status.h"
 
@@ -55,4 +56,5 @@ namespace kZmieniacz {
   Control *pCtrl = NULL;
   Status *sCtrl = NULL;
   NetList *lCtrl = NULL;
+  MRU *MRUlist = NULL;
 }

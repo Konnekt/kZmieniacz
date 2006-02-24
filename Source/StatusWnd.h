@@ -6,8 +6,8 @@
  *
  *  @filesource
  *  @copyright    Copyright (c) 2005-2006 Sijawusz Pur Rahnama
- *  @copyright    Copyright (c) 2004 Kuba Niegowski
- *  @copyright    Copyright (c) 2003-2006 Olórin
+ *  @copyright    Copyright (c) 2004 Kuba 'nix' Niegowski
+ *  @copyright    Copyright (c) 2003-2006 Kamil 'Olórin' Figiela
  *  @link         svn://kplugins.net/kzmieniacz/ kZmieniacz plugin SVN Repo
  *  @version      $Revision$
  *  @modifiedby   $LastChangedBy$
@@ -21,6 +21,7 @@
 #include "main.h"
 
 #include "Helpers.h"
+#include "MRU.h"
 #include "Control.h"
 #include "editFix.h"
 
@@ -59,7 +60,7 @@ namespace kZmieniacz {
 
   class StatusWnd {
     public:
-      StatusWnd(std::string className, std::string mruName, int mruSizeCfgCol);
+      StatusWnd(std::string className);
       ~StatusWnd();
 
       void prepareButtonImage(HIMAGELIST &hIml, HWND hWnd, int net, int status);
@@ -80,23 +81,12 @@ namespace kZmieniacz {
         this->instances.erase(key);
       }
 
-      inline std::string getMruName() {
-        return(this->mruName);
-      }
-
-      inline int getMruSize() {
-        int size = GETINT(this->mruSizeCfgCol);
-        return(size ? size : 1);
-      }
-
       void classRegister();
       void classUnRegister();
       void show(int net = 0);
 
     protected:
       std::string className;
-      std::string mruName;
-      int mruSizeCfgCol;
       std::map<int, HWND> instances;
   };
   StatusWnd *wCtrl = NULL;

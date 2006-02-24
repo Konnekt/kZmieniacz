@@ -153,55 +153,6 @@ namespace Helpers {
     return(prevOwner);
   }
 
-  tMRUlist getMRUlist(const char * name, int count, const char * buff, int buffSize) {
-    tMRUlist list;
-    sMRU mruList;
-
-    mruList.name = name;
-    mruList.count = count;
-    mruList.flags = MRU_SET_LOADFIRST;
-    if (buff) {
-      mruList.buffer = (char*) buff;
-      mruList.flags |= MRU_GET_ONEBUFF;
-      mruList.buffSize = buffSize;
-    } else {
-      mruList.flags |= MRU_GET_USETEMP;
-      mruList.buffSize = 1024;
-    }
-
-    sIMessage_MRU mru(IMC_MRU_GET, &mruList);
-    Ctrl->IMessage(&mru);
-
-    for (int i = 0; i < mru.MRU->count; i++) {
-      if (!mru.MRU->values[i]) break;
-      list.push_back((char*)mru.MRU->values[i]);
-    }
-    return(list);
-  }
-
-  void setMRUlist(const char * name, std::string current, int count) {
-    tMRUlist list;
-    list.push_back(current);
-    setMRUlist(name, list, count);
-  }
-
-  void setMRUlist(const char * name, tMRUlist list, int count) {
-    for (tMRUlist::iterator it = list.begin(); it != list.end(); it++) {
-      sMRU mru;
-
-      mru.name = name;
-      mru.flags = MRU_SET_LOADFIRST | MRU_GET_USETEMP;
-      mru.current = (*it).c_str();
-      mru.count = count;
-
-      Ctrl->IMessage(&sIMessage_MRU(IMC_MRU_SET, &mru));
-    }
-  }
-
-  void clearMru(const char * name) {
-    setMRUlist(name, "", 0);
-  }
-
   void addItemToHistory(cMessage* msg, int cnt, const char * dir, std::string name, int session) {
     sHISTORYADD item;
 

@@ -6,8 +6,8 @@
  *
  *  @filesource
  *  @copyright    Copyright (c) 2005-2006 Sijawusz Pur Rahnama
- *  @copyright    Copyright (c) 2004 Kuba Niegowski
- *  @copyright    Copyright (c) 2003-2006 Olórin
+ *  @copyright    Copyright (c) 2004 Kuba 'nix' Niegowski
+ *  @copyright    Copyright (c) 2003-2006 Kamil 'Olórin' Figiela
  *  @link         svn://kplugins.net/kzmieniacz/ kZmieniacz plugin SVN Repo
  *  @version      $Revision$
  *  @modifiedby   $LastChangedBy$
@@ -132,8 +132,7 @@ namespace kZmieniacz {
         }
 
         // odczytujemy liste mru
-        std::string name = wCtrl->getMruName();
-        tMRUlist list = Helpers::getMRUlist(name.c_str(), wCtrl->getMruSize());
+        tMRUlist list = MRUlist->get();
 
         // wype³niamy combobox
         for (tMRUlist::iterator it = list.begin(); it != list.end(); it++) {
@@ -185,8 +184,7 @@ namespace kZmieniacz {
             if (IsDlgButtonChecked(hWnd, ST_OFFLINE)) st = ST_OFFLINE;
 
             if (data->net == kZmieniacz::net) {
-              std::string name = wCtrl->getMruName();
-              Helpers::setMRUlist(name.c_str(), msg, wCtrl->getMruSize());
+              MRUlist->append(msg);
 
               SETINT(cfg::wnd::changeOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE) == BST_CHECKED) ? 1 : 0);
               SETINT(cfg::wnd::changeInfoOnEnable, (IsDlgButtonChecked(hWnd, STATUS_CHANGE_INFO) == BST_CHECKED) ? 1 : 0);
@@ -236,11 +234,8 @@ namespace kZmieniacz {
     return(DefWindowProc(hWnd, iMsg, wParam, lParam));
   }
 
-  StatusWnd::StatusWnd(std::string className, std::string mruName, int mruSizeCfgCol) {
+  StatusWnd::StatusWnd(std::string className) {
     this->className = className;
-    this->mruName = mruName;
-    this->mruSizeCfgCol = mruSizeCfgCol;
-
     this->classRegister();
   }
 
