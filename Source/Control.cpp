@@ -63,13 +63,13 @@ namespace kZmieniacz {
   }
 
   void Control::refreshCombo(std::string info) {
-    SendMessage(this->stInfoTb, CB_RESETCONTENT, (WPARAM)0, 0);
+    SendMessage(stInfoTb, CB_RESETCONTENT, (WPARAM)0, 0);
 
     tMRUlist list = MRUlist->get();
     for (tMRUlist::iterator it = list.begin(); it != list.end(); it++) {
-      SendMessage(this->stInfoTb, CB_ADDSTRING, 0, (LPARAM) (*it).c_str());
+      SendMessage(stInfoTb, CB_ADDSTRING, 0, (LPARAM) (*it).c_str());
     }
 
-    SetWindowText(this->stInfoTb, info.c_str());
+    SetWindowText(stInfoTb, info.c_str());
   }
 }

@@ -44,14 +44,15 @@ namespace kZmieniacz {
       void refreshCombo(std::string info);
 
       int width;
-      HWND stInfoTb;
-      WNDPROC mainProc;
-      WNDPROC tbProc;
       std::map<int, int> stTbNets;
 
     protected:
       int pluginsGroup;
   };
+
+  HWND stInfoTb = NULL;
+  WNDPROC mainProc = NULL;
+  WNDPROC tbProc = NULL;
 
   Control *pCtrl = NULL;
   Status *sCtrl = NULL;

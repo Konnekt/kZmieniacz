@@ -24,6 +24,9 @@ Status::Status(NetList *lCtrl, int onHiddenCfgCol, int dotsCfgCol, std::string s
   this->onHiddenCfgCol = onHiddenCfgCol;
   this->dotsCfgCol = dotsCfgCol;
   this->remember = false;
+
+  this->stInfoMaxChars.push_back(sStInfoMaxChars(plugsNET::dwutlenek, 255));
+  this->stInfoMaxChars.push_back(sStInfoMaxChars(plugsNET::gg, 70));
 }
 
 Status::~Status() {
@@ -32,6 +35,7 @@ Status::~Status() {
 
   this->stReplacements.clear();
   this->rememberedSt.clear();
+  this->stInfoMaxChars.clear();
   this->lastSt.clear();
 }
 
@@ -59,14 +63,14 @@ void Status::removeReplacementSt(int net, int before) {
 void Status::changeStatus(int st) {
   tItemNets nets = this->lCtrl->getNets();
   for (tItemNets::iterator it = nets.begin(); it != nets.end(); it++) {
-    if (this->isNetUseful(it->net)) this->changeStatus(it->net, st);
+    if (this->isNetValid(it->net)) this->changeStatus(it->net, st);
   }
 }
 
 void Status::changeStatus(std::string info, int st) {
   tItemNets nets = this->lCtrl->getNets();
   for (tItemNets::iterator it = nets.begin(); it != nets.end(); it++) {
-    if (this->isNetUseful(it->net)) this->changeStatus(it->net, info, st);
+    if (this->isNetValid(it->net)) this->changeStatus(it->net, info, st);
   }
 }
 
@@ -146,7 +150,7 @@ void Status::rememberInfo() {
 }
 
 void Status::rememberInfo(int net) {
-  if (!this->isNetUseful(net)) return;
+  if (!this->isNetValid(net)) return;
 
   int st = this->getActualStatus(net);
   std::string info = this->getActualInfo(net);
@@ -197,7 +201,7 @@ bool Status::chgOnHidden() {
   return(this->onHiddenCfgCol ? (bool) GETINT(this->onHiddenCfgCol) : true);
 }
 
-bool Status::isNetUseful(int net) {
+bool Status::isNetValid(int net) {
   if (this->lCtrl->getNetState(net)) {
     if (!this->chgOnHidden() && (ST_HIDDEN == this->getActualStatus(net))) {
       return(false);
@@ -209,38 +213,8 @@ bool Status::isNetUseful(int net) {
 }
 
 std::string Status::limitChars(std::string status, int net) {
-  enMaxLength limit;
-
-  switch (net) {
-    case plugsNET::kjabber:
-    case plugsNET::kjabber1:
-    case plugsNET::kjabber2:
-    case plugsNET::kjabber3:
-    case plugsNET::kjabber4:
-    case plugsNET::kjabber5:
-    case plugsNET::kjabber6:
-    case plugsNET::kjabber7:
-    case plugsNET::kjabber8:
-    case plugsNET::kjabber9:
-    case plugsNET::kjabber10: {
-      limit = jabber;
-      break;
-    }
-    case plugsNET::dwutlenek: {
-      limit = tlen;
-      break;
-    }
-    case plugsNET::gg: {
-      limit = gaduGadu;
-      break;
-    }
-    default: {
-      limit = normal;
-      break;
-    }
-  }
-
-  if (status.length() > limit) {
+  int limit = this->getStInfoMaxLength(net);
+  if (limit && (status.length() > limit)) {
     // truncating string
     status.resize(limit);
 

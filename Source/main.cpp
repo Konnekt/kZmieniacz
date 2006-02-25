@@ -38,7 +38,7 @@ namespace kZmieniacz {
       }
 
       case WM_SIZE: {
-        // SendMessage(pCtrl->stInfoTb, WM_SIZE, SIZE_RESTORED, || HIWORD(lParam));
+        // SendMessage(stInfoTb, WM_SIZE, SIZE_RESTORED, || HIWORD(lParam));
         WORD size = (WORD)SendMessage((HWND) hWnd, (UINT) TB_GETBUTTONSIZE, 0, 0);
         sUIActionInfo ai;
 
@@ -52,28 +52,28 @@ namespace kZmieniacz {
         // ai.y = HIWORD(lParam);
 
         UIActionSet(ai);
-        SetWindowPos(pCtrl->stInfoTb, HWND_TOP, 0, 0, LOWORD(lParam) - LOWORD(size) + pCtrl->width, 20, 
+        SetWindowPos(stInfoTb, HWND_TOP, 0, 0, LOWORD(lParam) - LOWORD(size) + pCtrl->width, 20, 
           SWP_ASYNCWINDOWPOS | SWP_NOMOVE);
         break;
       }
     }
-    return(CallWindowProc(pCtrl->tbProc, hWnd, iMsg, wParam, lParam));
+    return(CallWindowProc(tbProc, hWnd, iMsg, wParam, lParam));
   }
 
   LRESULT CALLBACK mainProcNew(HWND hWnd, UINT  iMsg, WPARAM  wParam, LPARAM lParam) {
     switch(iMsg) {
       case WM_COMMAND: {
-        if ((LOWORD(wParam) == 1) && (GetFocus() == GetDlgItem(pCtrl->stInfoTb, IMIA_GGSTATUS_OFFLINE))) 
+        if ((LOWORD(wParam) == 1) && (GetFocus() == GetDlgItem(stInfoTb, IMIA_GGSTATUS_OFFLINE))) 
           Helpers::UIActionCall(ui::tb::tb, ui::tb::btnOk);
         break;
       }
     }
-    return(CallWindowProc(pCtrl->mainProc, hWnd, iMsg, wParam, lParam));
+    return(CallWindowProc(mainProc, hWnd, iMsg, wParam, lParam));
   }
 
   int IStart() {
     HWND handle = (HWND) Ctrl->ICMessage(IMI_GROUP_GETHANDLE, (int) &sUIAction(0, IMIG_MAINWND));
-    pCtrl->mainProc = (WNDPROC) SetWindowLongPtr(handle, GWL_WNDPROC, (LONG_PTR)mainProcNew);
+    mainProc = (WNDPROC) SetWindowLongPtr(handle, GWL_WNDPROC, (LONG_PTR) mainProcNew);
 
     // toolbar z przyciskami sieci
     int n = 0, netsCount = Ctrl->IMessage(IMI_GROUP_ACTIONSCOUNT, 0, 0, (int)&sUIAction(IMIG_BAR, IMIG_STATUS));
@@ -96,9 +96,8 @@ namespace kZmieniacz {
         }
       }
 
-      if (!isSep) {
-        UIActionInsert(acnID, 0, 0, ACTT_SEP);
-      }
+      if (!isSep) UIActionInsert(acnID, 0, 0, ACTT_SEP);
+
       // dodajemy pozycjê w menu sieci
       UIActionInsert(acnID, id, 0, ACTR_INIT, "Opis: ", ico::stInfo);
       pCtrl->stTbNets[id] = net;
@@ -114,8 +113,20 @@ namespace kZmieniacz {
   }
 
   int IEnd() {
-    delete pCtrl, sCtrl, wCtrl, lCtrl, MRUlist;
-    pCtrl, sCtrl, wCtrl, lCtrl, MRUlist = NULL;
+    delete pCtrl;
+    pCtrl = NULL;
+
+    delete sCtrl;
+    sCtrl = NULL;
+
+    delete wCtrl;
+    wCtrl = NULL;
+
+    delete lCtrl;
+    lCtrl = NULL;
+
+    delete MRUlist;
+    MRUlist = NULL;
 
     return(1);
   }
@@ -341,20 +352,20 @@ namespace kZmieniacz {
           an->y += 100;
           an->h += 20;
 
-          pCtrl->tbProc = (WNDPROC) SetWindowLongPtr(an->hwndParent, GWL_WNDPROC, (LONG_PTR) tbProcNew);
+          tbProc = (WNDPROC) SetWindowLongPtr(an->hwndParent, GWL_WNDPROC, (LONG_PTR) tbProcNew);
           HWND hwnd = GetDlgItem(an->hwnd, IMIA_GGSTATUS_OFFLINE);
 
           SetProp(hwnd, "oldWndProc", (HANDLE) SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) editFix));
           SendMessage(an->hwnd, WM_SETFONT, (WPARAM) an->font, true);
 
-          pCtrl->stInfoTb = an->hwnd;
+          stInfoTb = an->hwnd;
           pCtrl->refreshCombo(GETSTRA(cfg::lastStInfo));
         } else if (anBase->code == ACTN_DESTROYWINDOW) {
           sUIActionNotify_destroyWindow * an = (anBase->s_size >= sizeof(sUIActionNotify_destroyWindow)) ? 
             static_cast<sUIActionNotify_destroyWindow*>(anBase) : 0;
 
           DestroyWindow(an->hwnd);
-          pCtrl->stInfoTb = NULL;
+          stInfoTb = NULL;
         }
         break;
       }
@@ -388,9 +399,9 @@ namespace kZmieniacz {
           case ui::tb::btnOff: status = ST_OFFLINE; break;
         }
 
-        int len = SendMessage(pCtrl->stInfoTb, WM_GETTEXTLENGTH, 0, 0) + 1;
+        int len = SendMessage(stInfoTb, WM_GETTEXTLENGTH, 0, 0) + 1;
         char * buff = new char[len];
-        GetWindowText(pCtrl->stInfoTb, buff, len);
+        GetWindowText(stInfoTb, buff, len);
 
         if (an->act.id == ui::tb::btnOk) {
           MRUlist->append(buff);
@@ -404,10 +415,11 @@ namespace kZmieniacz {
       }
 
       case ui::tb::stInfoThis: {
-        bool isHandled = !lCtrl->isIgnored(GETCNTI(an->act.cnt, CNT_NET));
+        int net = GETCNTI(an->act.cnt, CNT_NET);
+        bool isHandled = !lCtrl->isIgnored(net);
 
         if (an->code == ACTN_ACTION) {
-          wCtrl->show(isHandled ? GETCNTI(an->act.cnt, CNT_NET) : 0);
+          wCtrl->show(isHandled ? net : 0);
         } else if (an->code == ACTN_SHOW) {
           Helpers::chgBtn(IMIG_MSGTB, ui::tb::stInfoThis, AC_CURRENT, 0, 0, 
             (isHandled) ? 0 : ACTS_HIDDEN);
@@ -483,15 +495,15 @@ int __stdcall IMessageProc(sIMessage_base *msgBase) {
     case IM_GET_STATUS:      return((int)GETINT(cfg::lastSt));
 
     case IM_PLUG_UPDATE: {
-      if (!msg->p1 || msg->p1 > VERSION_TO_NUM(1,4,0,3)) break;
+      if (!msg->p1 || msg->p1 > VERSION_TO_NUM(1,4,0,4)) break;
 
-      // odczytujemy liste mru
+      // odczytujemy liste MRU
       tMRUlist list = MRU::get("dlg_gg_status_desc", 1000, false);
 
-      // przepisujemy opisy do nowej listy MRU
-      MRUlist->set(list);
+      // dodajemy opisy do nowej listy MRU
+      MRU::append(cfg::mruName, list, GETINT(cfg::mruSize));
 
-      logDebug("[kZmieniacz::IMessageProc(IM_PLUG_UPDATE)]: zaimportowano %i opisów",
+      logDebug("[kZmieniacz::IMessageProc(IM_PLUG_UPDATE)]: zaimportowano opisów: %i",
         list.size());
       break;
     }
