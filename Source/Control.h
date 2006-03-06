@@ -38,6 +38,11 @@ namespace kZmieniacz {
         return(UIIcon(IT_STATUS, _net, status, 0));
       }
 
+      inline std::string getStInfoMruName(int net) {
+        std::string name = cfg::mruName;
+        return(name + "@" + itos(net));
+      }
+
       void changeStatus(int status, std::string info, int net = 0);
       void changeStatus(int status, int net = 0);
 

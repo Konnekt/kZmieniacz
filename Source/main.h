@@ -90,6 +90,7 @@ namespace kZmieniacz {
     const unsigned int netChange = cfg + 9;
     const unsigned int mruSize = cfg + 10;
     const unsigned int dotsAppend = cfg + 11;
+    const unsigned int sepHistory = cfg + 14;
 
     const unsigned int lastStInfo = cfg + 12;
     const unsigned int lastSt = cfg + 13;

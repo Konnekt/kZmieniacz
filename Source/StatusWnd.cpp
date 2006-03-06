@@ -36,12 +36,14 @@ namespace kZmieniacz {
 
         LPCREATESTRUCT pCreate = (LPCREATESTRUCT) lParam;
         int net = (int) pCreate->lpCreateParams;
-        sWndData *data = new sWndData(net);
+        sWndData *data = new sWndData(net, sCtrl->getStInfoMaxLength(net));
         SetWindowLong(hWnd, GWL_USERDATA, (LONG) data);
 
         wCtrl->addInstance(net, hWnd);
 
         HFONT font = CreateFont(-11, 0, 0, 0, 0, 0, 0, 0, EASTEUROPE_CHARSET, OUT_DEFAULT_PRECIS, 
+          CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma");
+        HFONT fontBold = CreateFont(-11, 0, 0, 0, FW_BOLD, 0, 0, 0, EASTEUROPE_CHARSET, OUT_DEFAULT_PRECIS, 
           CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma");
         SendMessage(hWnd, WM_SETFONT, (WPARAM) font, true);
 
@@ -56,6 +58,7 @@ namespace kZmieniacz {
         GetClientRect(hWnd, &rect);
         TOOLINFO ti;
         ZeroMemory(&ti, sizeof(TOOLINFO));
+
         ti.cbSize = sizeof(TOOLINFO);
         ti.uFlags = TTF_SUBCLASS;       
         ti.hinst = Ctrl->hInst();
@@ -100,7 +103,7 @@ namespace kZmieniacz {
         // SetProp(edit, "oldWndProc", (HANDLE) SetWindowLongPtr(GetDlgItem(hWndCombo, 0x3e9), GWLP_WNDPROC, (LONG_PTR) editFix));
 
         // przycisk OK
-        HWND hWndTmp = CreateWindowEx(WS_EX_CONTROLPARENT, "button", "OK", BS_DEFPUSHBUTTON | BS_TEXT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, 
+        HWND hWndTmp = CreateWindowEx(WS_EX_CONTROLPARENT, "button", "OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT | WS_TABSTOP, 
           212, 190, 75, 25, hWnd, (HMENU) STATUS_OK, Ctrl->hInst(), NULL);
         SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
 
@@ -134,6 +137,11 @@ namespace kZmieniacz {
         // odczytujemy liste mru
         tMRUlist list = MRUlist->get();
 
+        if (GETINT(cfg::sepHistory) && (data->net != kZmieniacz::net)) {
+          std::string name = pCtrl->getStInfoMruName(data->net);
+          list = MRU::get(name.c_str(), GETINT(cfg::mruSize));
+        }
+
         // wype³niamy combobox
         for (tMRUlist::iterator it = list.begin(); it != list.end(); it++) {
           SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM) (*it).c_str());
@@ -145,12 +153,16 @@ namespace kZmieniacz {
         SendMessage(edit, WM_SETFONT, (WPARAM) font, true);
         SetProp(edit, "oldWndProc", (HANDLE) SetWindowLongPtr(edit, GWLP_WNDPROC, (LONG_PTR) editFix));
 
-        std::string counter = "Znaków: " + itos(info.length());
-        hWndTmp = CreateWindow("static", counter.c_str(), WS_CHILD | WS_VISIBLE | SS_CENTER, 
-          130, 196, 62, 15, hWnd, (HMENU) STATUS_COUNTER, Ctrl->hInst(), NULL);
+        // licznik
+        hWndTmp = CreateWindow("static", "Znaków:", WS_CHILD | WS_VISIBLE, 
+          130, 197, 45, 15, hWnd, NULL, Ctrl->hInst(), NULL);
         SendMessage(hWndTmp, WM_SETFONT, (WPARAM) font, true);
 
-        // if (net == plugsNET::gg) SendMessage(hWndCombo, EM_LIMITTEXT, (WPARAM) 70, (LPARAM) 0);
+        hWndTmp = CreateWindow("static", itos(info.length()).c_str(), WS_CHILD | WS_VISIBLE, 
+          175, 197, 30, 15, hWnd, (HMENU) STATUS_COUNTER, Ctrl->hInst(), NULL);
+        SendMessage(hWndTmp, WM_SETFONT, (WPARAM) fontBold, true);
+
+        // SendMessage(hWndCombo, EM_LIMITTEXT, (WPARAM) data->maxChars, (LPARAM) 0);
 
         SetFocus(edit);
         SendMessage(hWndCombo, CB_SETCURSEL, 0, 0);
@@ -163,6 +175,19 @@ namespace kZmieniacz {
 
         delete data;
         return(0);
+      }
+
+      case WM_CTLCOLOREDIT: {
+        sWndData *data = (sWndData*) GetWindowLong(hWnd, GWL_USERDATA);
+        int chars = GetWindowTextLength((HWND)lParam);
+
+        if ((HWND) lParam != (HWND) GetDlgItem(hWnd, STATUS_EDIT_INFO))
+          break;
+
+        SetTextColor((HDC)wParam, (data->maxChars && (chars > data->maxChars)) ? RGB(255,0,0) : RGB(0,0,0));
+        SetBkColor((HDC)wParam, RGB(255,255,255));
+
+        return((LRESULT)GetSysColorBrush(COLOR_3DHILIGHT));
       }
 
       case WM_COMMAND: {
@@ -194,6 +219,10 @@ namespace kZmieniacz {
               else if (GETINT(cfg::wnd::changeOnEnable))
                 pCtrl->changeStatus(st);
             } else {
+              if (GETINT(cfg::sepHistory)) {
+                std::string name = pCtrl->getStInfoMruName(data->net);
+                MRU::append(name.c_str(), msg, GETINT(cfg::mruSize));
+              }
               pCtrl->changeStatus(st, msg, data->net);
             }
 
@@ -216,14 +245,17 @@ namespace kZmieniacz {
               GetWindowText(GetDlgItem(hWnd, STATUS_EDIT), msg, len);
               SetWindowText(GetDlgItem(hWnd, STATUS_EDIT_INFO), msg);
 
-              std::string counter = "Znaków: " + itos(GetWindowTextLength(GetDlgItem(hWnd, STATUS_EDIT_INFO)));
-              SetWindowText(GetDlgItem((HWND)hWnd, STATUS_COUNTER), counter.c_str());
+              SetWindowText(GetDlgItem((HWND)hWnd, STATUS_COUNTER), itos(len - 1).c_str());
 
               delete [] msg;
               return(1);
             } else if (HIWORD(wParam) == EN_UPDATE) {
-              std::string counter = "Znaków: " + itos(GetWindowTextLength((HWND)lParam));
-              SetWindowText(GetDlgItem((HWND)hWnd, STATUS_COUNTER), counter.c_str());
+              sWndData *data = (sWndData*) GetWindowLong(hWnd, GWL_USERDATA);
+              int chars = GetWindowTextLength((HWND)lParam);
+
+              SetWindowText(GetDlgItem((HWND)hWnd, STATUS_COUNTER), itos(chars).c_str());
+              if (data->maxChars && (chars == data->maxChars || chars == (data->maxChars + 1)))
+                InvalidateRect((HWND)lParam, NULL, true);
             }
             break;
           }

@@ -51,6 +51,12 @@ typedef std::map<int, sItemInfo> tLastInfos;
 typedef std::list<sStReplacement> tStReplacements;
 typedef std::list<sStInfoMaxChars> tStInfoMaxChars;
 
+struct lessThen : std::greater<tStInfoMaxChars> {
+  bool operator()(const sStInfoMaxChars& a, const sStInfoMaxChars& b) const {
+    return(a.length < b.length);
+  }
+};
+
 class Status {
   public:
     Status(NetList *lCtrl, int onHiddenCfgCol = 0, int dotsCfgCol = 0, std::string stInfoVar = "");
@@ -95,6 +101,20 @@ class Status {
         if (it->net == net) return(it->length);
       }
       return(0);
+    }
+
+    inline sStInfoMaxChars getStInfoBottomLimit() {
+      tStInfoMaxChars list;
+      for (tStInfoMaxChars::iterator it = this->stInfoMaxChars.begin(); it != this->stInfoMaxChars.end(); it++) {
+        if (this->lCtrl->getNetState(it->net)) list.push_back(sStInfoMaxChars(it->net, it->length));
+      }
+
+      if (int i = list.size()) {
+        if (i > 1) list.sort(lessThen());
+        return(list.front());
+      } else {
+        return(sStInfoMaxChars());
+      }
     }
 
     // Zmienia status, txt - opis, st - id statusu

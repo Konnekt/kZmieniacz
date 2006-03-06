@@ -28,6 +28,8 @@
 namespace kZmieniacz {
   struct sWndData {
     unsigned int net;
+    unsigned int maxChars;
+
     HIMAGELIST hImlOnline;
     HIMAGELIST hImlChat;
     HIMAGELIST hImlAway;
@@ -36,7 +38,8 @@ namespace kZmieniacz {
     HIMAGELIST hImlInv;
     HIMAGELIST hImlOffline;
 
-    sWndData(int _net = 0): net(_net), hImlOnline(0), hImlChat(0), hImlAway(0), hImlNa(0), hImlDnd(0), hImlInv(0), hImlOffline(0) { }
+    sWndData(int _net = 0, int _maxChars = 0): net(_net), maxChars(_maxChars), hImlOnline(0),
+      hImlChat(0), hImlAway(0), hImlNa(0), hImlDnd(0), hImlInv(0), hImlOffline(0) { }
     ~sWndData() {
       if (hImlOnline)  ImageList_Destroy(hImlOnline);
       if (hImlChat)    ImageList_Destroy(hImlChat);

@@ -34,8 +34,31 @@ namespace kZmieniacz {
   LRESULT CALLBACK tbProcNew(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     switch (iMsg) {
       case WM_GETDLGCODE: {
-        return(DLGC_DEFPUSHBUTTON | DLGC_RADIOBUTTON | DLGC_BUTTON | DLGC_WANTALLKEYS | DLGC_WANTMESSAGE);
+        return(DLGC_DEFPUSHBUTTON | DLGC_BUTTON | DLGC_WANTALLKEYS | DLGC_WANTMESSAGE);
       }
+
+      case WM_CTLCOLOREDIT: {
+        int chars = GetWindowTextLength((HWND)lParam);
+        int bottomLimit = sCtrl->getStInfoBottomLimit().length;
+
+        SetTextColor((HDC)wParam, (bottomLimit && (chars > bottomLimit)) ? RGB(255,0,0) : RGB(0,0,0));
+        SetBkColor((HDC)wParam, RGB(255,255,255));
+
+        return((LRESULT)GetSysColorBrush(COLOR_3DHILIGHT));
+      }
+
+      /*
+      case WM_COMMAND: {
+        if (HIWORD(wParam) == EN_UPDATE) {
+          int chars = GetWindowTextLength((HWND)lParam);
+          int bottomLimit = sCtrl->getStInfoBottomLimit().length;
+
+          if (bottomLimit && (chars == bottomLimit || chars == (bottomLimit + 1)))
+            InvalidateRect((HWND)lParam, NULL, true);
+        }
+        break;
+      }
+      */
 
       case WM_SIZE: {
         // SendMessage(stInfoTb, WM_SIZE, SIZE_RESTORED, || HIWORD(lParam));
@@ -45,7 +68,7 @@ namespace kZmieniacz {
         ai.act = sUIAction(ui::tb::tb, ui::tb::width);
         ai.mask = UIAIM_SIZE;
 
-        ai.w = LOWORD(lParam)- LOWORD(size);
+        ai.w = LOWORD(lParam) - LOWORD(size);
         ai.h = HIWORD(lParam);
 
         // ai.x = LOWORD(lParam) - LOWORD(size);
@@ -60,7 +83,7 @@ namespace kZmieniacz {
     return(CallWindowProc(tbProc, hWnd, iMsg, wParam, lParam));
   }
 
-  LRESULT CALLBACK mainProcNew(HWND hWnd, UINT  iMsg, WPARAM  wParam, LPARAM lParam) {
+  LRESULT CALLBACK mainProcNew(HWND hWnd, UINT iMsg, WPARAM  wParam, LPARAM lParam) {
     switch(iMsg) {
       case WM_COMMAND: {
         if ((LOWORD(wParam) == 1) && (GetFocus() == GetDlgItem(stInfoTb, IMIA_GGSTATUS_OFFLINE))) 
@@ -135,6 +158,7 @@ namespace kZmieniacz {
     Ctrl->SetColumn(DTCFG, cfg::mruSize, DT_CT_INT, 20, "kZmieniacz/mruSize");
     Ctrl->SetColumn(DTCFG, cfg::netChange, DT_CT_STR, "", "kZmieniacz/netChange");
     Ctrl->SetColumn(DTCFG, cfg::dotsAppend, DT_CT_INT, 1, "kZmieniacz/dotsAppend");
+    Ctrl->SetColumn(DTCFG, cfg::sepHistory, DT_CT_INT, 0, "kZmieniacz/sepHistory");
 
     Ctrl->SetColumn(DTCFG, cfg::showInMainWindow, DT_CT_INT, 0, "kZmieniacz/showInMainWindow");
     Ctrl->SetColumn(DTCFG, cfg::showInCntWindow, DT_CT_INT, 1, "kZmieniacz/showInCntWindow");
@@ -236,6 +260,7 @@ namespace kZmieniacz {
     /* |-> General settings group */
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_GROUP, "Ustawienia");
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK, "Dodawaj '...' przy skracaniu d³ugich opisów", cfg::dotsAppend);
+    UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK, "Osobna historia opisów dla ka¿dej sieci", cfg::sepHistory);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_SEPARATOR);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "Zmiana statusu wszystkich sieci w menu wtyczek", cfg::showInMainWindow);
     UIActionCfgAdd(ui::cfgGroup, 0, ACTT_CHECK | ACTSC_NEEDRESTART, "Zmiana statusu wszystkich sieci na osobnym toolbarze", 
