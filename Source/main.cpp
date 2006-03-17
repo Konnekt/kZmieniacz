@@ -191,6 +191,7 @@ namespace kZmieniacz {
     lCtrl->addIgnored(plugsNET::klan);
     lCtrl->addIgnored(plugsNET::checky);
     lCtrl->addIgnored(plugsNET::actio);
+    lCtrl->addIgnored(plugsNET::metak);
     lCtrl->loadNets();
 
     sCtrl = new Status(lCtrl, NULL, cfg::dotsAppend);
