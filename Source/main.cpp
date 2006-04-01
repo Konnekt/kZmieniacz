@@ -433,7 +433,7 @@ namespace kZmieniacz {
           MRUlist->append(buff);
           pCtrl->changeStatus(-1, buff);
         } else {
-          pCtrl->changeStatus(status);
+          pCtrl->changeStatus(status, buff);
         }
 
         delete [] buff;
