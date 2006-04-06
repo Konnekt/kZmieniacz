@@ -433,7 +433,8 @@ namespace kZmieniacz {
           MRUlist->append(buff);
           pCtrl->changeStatus(-1, buff);
         } else {
-          pCtrl->changeStatus(status, buff);
+          pCtrl->changeStatus(status, GETINT(cfg::showToolbar) ? 
+            buff : GETSTRA(cfg::lastStInfo));
         }
 
         delete [] buff;
