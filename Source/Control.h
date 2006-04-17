@@ -50,6 +50,7 @@ namespace kZmieniacz {
 
       int width;
       std::map<int, int> stTbNets;
+	  POINT pos;
 
     protected:
       int pluginsGroup;

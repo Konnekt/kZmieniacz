@@ -59,24 +59,33 @@ namespace kZmieniacz {
         break;
       }
       */
+	  case TB_SETEXTENDEDSTYLE:
+		  {
+				int ret = (CallWindowProc(tbProc, hWnd, iMsg, wParam, lParam));
+				RECT r;
+				GetClientRect(hWnd,&r);
+				SendMessage(hWnd,WM_SIZE,SIZE_RESTORED,MAKELPARAM((r.right-r.left),(r.bottom-r.top)));
+				return ret;
+		  }
 
       case WM_SIZE: {
         // SendMessage(stInfoTb, WM_SIZE, SIZE_RESTORED, || HIWORD(lParam));
         WORD size = (WORD)SendMessage((HWND) hWnd, (UINT) TB_GETBUTTONSIZE, 0, 0);
         sUIActionInfo ai;
-
         ai.act = sUIAction(ui::tb::tb, ui::tb::width);
         ai.mask = UIAIM_SIZE;
 
-        ai.w = LOWORD(lParam) - LOWORD(size);
+		RECT r;
+		SendMessage(hWnd, TB_GETITEMRECT, 0, (LPARAM)&r);
+
+		ai.w = LOWORD(lParam) - (r.right - r.left); //LOWORD(size);
         ai.h = HIWORD(lParam);
 
-        // ai.x = LOWORD(lParam) - LOWORD(size);
-        // ai.y = HIWORD(lParam);
+        int y = pCtrl->pos.y + (HIWORD(lParam) - 20)/2;
 
         UIActionSet(ai);
-        SetWindowPos(stInfoTb, HWND_TOP, 0, 0, LOWORD(lParam) - LOWORD(size) + pCtrl->width, 20, 
-          SWP_ASYNCWINDOWPOS | SWP_NOMOVE);
+		SetWindowPos(stInfoTb, HWND_TOP, (r.right - r.left), y, LOWORD(lParam) - (r.right - r.left), 20, 
+          SWP_ASYNCWINDOWPOS);
         break;
       }
     }
@@ -373,6 +382,8 @@ namespace kZmieniacz {
             an->hwndParent, (HMENU)anBase->act.id, Ctrl->hDll(), NULL); // + (HIWORD(size) / (2 - 10))
 
           pCtrl->width = LOWORD(size) - an->x;
+		  pCtrl->pos.y = an->y;
+		  pCtrl->pos.x = an->x;
           an->w = 100;
           an->h = 20;
           an->y += 100;
