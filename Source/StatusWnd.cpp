@@ -184,10 +184,10 @@ namespace kZmieniacz {
         if ((HWND) lParam != (HWND) GetDlgItem(hWnd, STATUS_EDIT_INFO))
           break;
 
-        SetTextColor((HDC)wParam, (data->maxChars && (chars > data->maxChars)) ? RGB(255,0,0) : RGB(0,0,0));
-        SetBkColor((HDC)wParam, RGB(255,255,255));
+        SetTextColor((HDC)wParam, (data->maxChars && (chars > data->maxChars)) ? RGB(255,0,0) : GetSysColor(COLOR_WINDOWTEXT));
+        SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
 
-        return((LRESULT)GetSysColorBrush(COLOR_3DHILIGHT));
+        return((LRESULT)GetSysColorBrush(COLOR_WINDOW));
       }
 
       case WM_COMMAND: {

@@ -41,10 +41,10 @@ namespace kZmieniacz {
         int chars = GetWindowTextLength((HWND)lParam);
         int bottomLimit = sCtrl->getStInfoBottomLimit().length;
 
-        SetTextColor((HDC)wParam, (bottomLimit && (chars > bottomLimit)) ? RGB(255,0,0) : RGB(0,0,0));
-        SetBkColor((HDC)wParam, RGB(255,255,255));
+        SetTextColor((HDC)wParam, (bottomLimit && (chars > bottomLimit)) ? RGB(255,0,0) : GetSysColor(COLOR_WINDOWTEXT));
+        SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
 
-        return((LRESULT)GetSysColorBrush(COLOR_3DHILIGHT));
+        return((LRESULT)GetSysColorBrush(COLOR_WINDOW));
       }
 
       /*
