@@ -32,7 +32,8 @@ using namespace kZmieniacz;
 
 namespace kZmieniacz {
   LRESULT CALLBACK tbProcNew(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
-	HBRUSH WindowBrush;
+    static HBRUSH windowBrush;
+
     switch (iMsg) {
       case WM_GETDLGCODE: {
         return(DLGC_DEFPUSHBUTTON | DLGC_BUTTON | DLGC_WANTALLKEYS | DLGC_WANTMESSAGE);
@@ -44,30 +45,31 @@ namespace kZmieniacz {
 
         SetTextColor((HDC)wParam, (bottomLimit && (chars > bottomLimit)) ? RGB(255,0,0) : GetSysColor(COLOR_WINDOWTEXT));
         SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
-		if(WindowBrush == 0) WindowBrush = GetSysColorBrush(COLOR_WINDOW);
-        return((LRESULT)WindowBrush);
+
+        if (!windowBrush) {
+          windowBrush = GetSysColorBrush(COLOR_WINDOW);
+        }
+        return((LRESULT)windowBrush);
       }
 
-      
       case WM_COMMAND: {
         if (HIWORD(wParam) == EN_UPDATE) {
-          /*int chars = GetWindowTextLength((HWND)lParam);
+          /* int chars = GetWindowTextLength((HWND)lParam);
           int bottomLimit = sCtrl->getStInfoBottomLimit().length;
 
-          if (bottomLimit && (chars == bottomLimit || chars == (bottomLimit + 1)))*/
-            InvalidateRect((HWND)lParam, NULL, true);
+          if (bottomLimit && (chars == bottomLimit || chars == (bottomLimit + 1))) */
+          InvalidateRect((HWND)lParam, NULL, true);
         }
         break;
       }
-      
-	  case TB_SETEXTENDEDSTYLE:
-		  {
-				int ret = (CallWindowProc(tbProc, hWnd, iMsg, wParam, lParam));
-				RECT r;
-				GetClientRect(hWnd,&r);
-				SendMessage(hWnd,WM_SIZE,SIZE_RESTORED,MAKELPARAM((r.right-r.left),(r.bottom-r.top)));
-				return ret;
-		  }
+
+      case TB_SETEXTENDEDSTYLE: {
+        int ret = CallWindowProc(tbProc, hWnd, iMsg, wParam, lParam);
+        RECT r;
+        GetClientRect(hWnd, &r);
+        SendMessage(hWnd, WM_SIZE, SIZE_RESTORED, MAKELPARAM((r.right - r.left), (r.bottom - r.top)));
+        return(ret);
+      }
 
       case WM_SIZE: {
         // SendMessage(stInfoTb, WM_SIZE, SIZE_RESTORED, || HIWORD(lParam));
@@ -76,18 +78,18 @@ namespace kZmieniacz {
         ai.act = sUIAction(ui::tb::tb, ui::tb::width);
         ai.mask = UIAIM_SIZE;
 
-		RECT r;
-		ZeroMemory(&r,sizeof(RECT));
-		SendMessage(hWnd, TB_GETITEMRECT, 0, (LPARAM)&r);
+        RECT r;
+        ZeroMemory(&r, sizeof(RECT));
+        SendMessage(hWnd, TB_GETITEMRECT, 0, (LPARAM)&r);
 
-		ai.w = LOWORD(lParam) - (r.right - r.left); //LOWORD(size);
+        ai.w = LOWORD(lParam) - (r.right - r.left); // LOWORD(size);
         ai.h = HIWORD(lParam);
 
-        int y = pCtrl->pos.y + (HIWORD(lParam) - 20)/2;
+        int y = pCtrl->pos.y + (HIWORD(lParam) - 20) / 2;
 
         UIActionSet(ai);
-		SetWindowPos(stInfoTb, HWND_TOP, (r.right - r.left), y, LOWORD(lParam) - (r.right - r.left), 20, 
-          SWP_ASYNCWINDOWPOS);
+        SetWindowPos(stInfoTb, HWND_TOP, (r.right - r.left), y, 
+          LOWORD(lParam) - (r.right - r.left), 20, SWP_ASYNCWINDOWPOS);
         break;
       }
     }
@@ -384,8 +386,9 @@ namespace kZmieniacz {
             an->hwndParent, (HMENU)anBase->act.id, Ctrl->hDll(), NULL); // + (HIWORD(size) / (2 - 10))
 
           pCtrl->width = LOWORD(size) - an->x;
-		  pCtrl->pos.y = an->y;
-		  pCtrl->pos.x = an->x;
+          pCtrl->pos.y = an->y;
+          pCtrl->pos.x = an->x;
+
           an->w = 100;
           an->h = 20;
           an->y += 100;
