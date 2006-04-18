@@ -29,8 +29,10 @@
 
 namespace kZmieniacz {
   LRESULT CALLBACK statusWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
+	static HBRUSH WindowBrush;
     switch(iMsg) {
       case WM_CREATE: {
+	    WindowBrush = 0;
         SendMessage(hWnd, WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) ICMessage(IMI_ICONGET, ico::logoSmall, IML_16));
         SendMessage(hWnd, WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) ICMessage(IMI_ICONGET, ico::logoSmall, IML_16));
 
@@ -186,8 +188,8 @@ namespace kZmieniacz {
 
         SetTextColor((HDC)wParam, (data->maxChars && (chars > data->maxChars)) ? RGB(255,0,0) : GetSysColor(COLOR_WINDOWTEXT));
         SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
-
-        return((LRESULT)GetSysColorBrush(COLOR_WINDOW));
+		if(WindowBrush == 0) WindowBrush = GetSysColorBrush(COLOR_WINDOW);
+        return((LRESULT)WindowBrush);
       }
 
       case WM_COMMAND: {
@@ -254,8 +256,8 @@ namespace kZmieniacz {
               int chars = GetWindowTextLength((HWND)lParam);
 
               SetWindowText(GetDlgItem((HWND)hWnd, STATUS_COUNTER), itos(chars).c_str());
-              if (data->maxChars && (chars == data->maxChars || chars == (data->maxChars + 1)))
-                InvalidateRect((HWND)lParam, NULL, true);
+             // if (data->maxChars && (chars == data->maxChars || chars == (data->maxChars + 1)))
+				  InvalidateRect((HWND)lParam, NULL, true);
             }
             break;
           }

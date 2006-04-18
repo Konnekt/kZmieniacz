@@ -32,6 +32,7 @@ using namespace kZmieniacz;
 
 namespace kZmieniacz {
   LRESULT CALLBACK tbProcNew(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
+	HBRUSH WindowBrush;
     switch (iMsg) {
       case WM_GETDLGCODE: {
         return(DLGC_DEFPUSHBUTTON | DLGC_BUTTON | DLGC_WANTALLKEYS | DLGC_WANTMESSAGE);
@@ -43,22 +44,22 @@ namespace kZmieniacz {
 
         SetTextColor((HDC)wParam, (bottomLimit && (chars > bottomLimit)) ? RGB(255,0,0) : GetSysColor(COLOR_WINDOWTEXT));
         SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
-
-        return((LRESULT)GetSysColorBrush(COLOR_WINDOW));
+		if(WindowBrush == 0) WindowBrush = GetSysColorBrush(COLOR_WINDOW);
+        return((LRESULT)WindowBrush);
       }
 
-      /*
+      
       case WM_COMMAND: {
         if (HIWORD(wParam) == EN_UPDATE) {
-          int chars = GetWindowTextLength((HWND)lParam);
+          /*int chars = GetWindowTextLength((HWND)lParam);
           int bottomLimit = sCtrl->getStInfoBottomLimit().length;
 
-          if (bottomLimit && (chars == bottomLimit || chars == (bottomLimit + 1)))
+          if (bottomLimit && (chars == bottomLimit || chars == (bottomLimit + 1)))*/
             InvalidateRect((HWND)lParam, NULL, true);
         }
         break;
       }
-      */
+      
 	  case TB_SETEXTENDEDSTYLE:
 		  {
 				int ret = (CallWindowProc(tbProc, hWnd, iMsg, wParam, lParam));
