@@ -76,6 +76,7 @@ namespace kZmieniacz {
         ai.mask = UIAIM_SIZE;
 
 		RECT r;
+		ZeroMemory(&r,sizeof(RECT));
 		SendMessage(hWnd, TB_GETITEMRECT, 0, (LPARAM)&r);
 
 		ai.w = LOWORD(lParam) - (r.right - r.left); //LOWORD(size);
